@@ -28,11 +28,12 @@ const PAIR_PARTS = [
 
 // ---- Controls ---------------------------------------------------------------
 
-// URL hash: #campaign, #campaign/once (each set once) or #campaign/scenario
+// URL hash: #campaign[/scenario | /once][/tested]
 const select = $('campaign');
 const scenarioSelect = $('scenario');
 const modeButtons = [...document.querySelectorAll('#mode button')];
 let mode = 'expected';
+const testedBox = $('tested');
 
 const MODE_NOTES = {
   expected: [
@@ -46,10 +47,11 @@ const MODE_NOTES = {
 };
 
 for (const [id, c] of Object.entries(data.campaigns)) select.append(el('option', { value: id, textContent: c.name }));
-const [hashCampaign, hashRest] = decodeURIComponent(location.hash.slice(1)).split('/');
+const [hashCampaign, ...hashFlags] = decodeURIComponent(location.hash.slice(1)).split('/');
 if (data.campaigns[hashCampaign]) select.value = hashCampaign;
-if (hashRest === 'once') mode = 'once';
-fillScenarioSelect(hashRest);
+if (hashFlags.includes('once')) mode = 'once';
+testedBox.checked = hashFlags.includes('tested');
+fillScenarioSelect(hashFlags.find((f) => f !== 'once' && f !== 'tested'));
 
 function fillScenarioSelect(keep = '') {
   const scenarios = data.campaigns[select.value].scenarios ?? {};
@@ -65,6 +67,7 @@ function updateHash() {
   let hash = select.value;
   if (scenarioSelect.value) hash += `/${scenarioSelect.value}`;
   else if (mode === 'once') hash += '/once';
+  if (testedBox.checked) hash += '/tested';
   history.replaceState(null, '', `#${hash}`);
 }
 
@@ -77,14 +80,23 @@ function updateModeControls() {
   const [lead, text] = MODE_NOTES[mode];
   $('mode-note').replaceChildren(el('strong', { textContent: lead }), ` ${text}`);
   for (const b of modeButtons) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+  $('tested-note').hidden = !testedBox.checked;
 }
 
-// The selected campaign or scenario: { copies, traits, overlaps }.
+// The selected campaign or scenario: { copies, traits, overlaps },
+// switched to its `tested` counts when the skill-test filter is on.
 function currentView() {
   const campaign = data.campaigns[select.value];
   const scenario = campaign.scenarios?.[scenarioSelect.value];
-  if (scenario) return { view: scenario, title: `${scenario.name} (${campaign.name})`, scope: scenario.name };
-  return { view: campaign[mode], title: campaign.name, scope: MODE_NOTES[mode][0].replace(/\.$/, '').toLowerCase() };
+  const base = scenario ?? campaign[mode];
+  const tested = testedBox.checked;
+  return {
+    view: tested ? base.tested : base,
+    title: scenario ? `${scenario.name} (${campaign.name})` : campaign.name,
+    scope: [scenario ? scenario.name : MODE_NOTES[mode][0].replace(/\.$/, '').toLowerCase(), tested && 'skill tests only']
+      .filter(Boolean)
+      .join(' · '),
+  };
 }
 
 select.addEventListener('change', () => {
@@ -103,6 +115,10 @@ for (const b of modeButtons) {
     render();
   });
 }
+testedBox.addEventListener('change', () => {
+  updateHash();
+  render();
+});
 $('fixed').addEventListener('change', () => renderPairs(currentView().view));
 
 // Legends: fixed order, same colors for every campaign.

@@ -31,16 +31,18 @@ try {
   dataDate = (await stat(join(ROOT, 'data/cache/api-public-cards.json'))).mtime.toISOString().slice(0, 10);
 }
 
-// { copies, traits, overlaps } for one campaign or scenario.
-function counts(scope) {
-  const { copies, traits } = countTraits(cards, scope);
+// { copies, traits, overlaps } for one campaign or scenario, plus the same
+// for cards with a skill test only (`tested`, see hasSkillTest).
+function countsFor(scope, options) {
+  const { copies, traits } = countTraits(cards, scope, options);
   return {
     copies,
     traits: traits.map(({ trait, total, byType }) => ({ trait, total, byType })),
     // Only non-zero pairs; the page derives coverage for all pairs (docs/pairs.js).
-    overlaps: countOverlaps(cards, scope),
+    overlaps: countOverlaps(cards, scope, options),
   };
 }
+const counts = (scope) => ({ ...countsFor(scope), tested: countsFor(scope, { testedOnly: true }) });
 
 const { version } = await readJson('package.json');
 const out = { source: 'ArkhamDB', version, dataDate, types: COUNTED_TYPES, campaigns: {} };

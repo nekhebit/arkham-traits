@@ -90,6 +90,8 @@
   .segmented button[aria-pressed="true"] { background: var(--row-hover); color: var(--text-primary); font-weight: 600; }
   .segmented button:focus-visible { outline: 2px solid var(--series-1); outline-offset: -2px; }
   [hidden] { display: none !important; }
+  .check { display: inline-flex; align-items: center; gap: 8px; color: var(--text-primary); cursor: pointer; }
+  .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--series-1); }
   .mode-note { margin: -4px 0 16px; max-width: 640px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
   .card + .card { margin-top: 24px; }
@@ -163,6 +165,10 @@
     </div>
   </div>
   <p class="note mode-note" id="mode-note"></p>
+  <div class="controls">
+    <label class="check"><input type="checkbox" id="tested"> Only cards with a skill test</label>
+  </div>
+  <p class="note mode-note" id="tested-note" hidden><strong>Only cards with a skill test.</strong> Grizzled only helps on a skill test. Counted: enemies with a fight or evade value, locations with a shroud value, and treacheries whose text mentions a test. A treachery that only reacts to other tests still counts, so treachery numbers may be a bit high.</p>
 
   <section class="card" aria-labelledby="chart-title">
     <h2 id="chart-title" class="summary"></h2>

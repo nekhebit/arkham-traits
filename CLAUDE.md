@@ -15,7 +15,8 @@ by counting trait frequency on encounter cards per campaign.
 - Take only the ArkhamCards "gather_encounter_sets" list (the encounter deck), not separate story-asset steps like "gather_residents". Hemlock Vale: `residents` is only in Fate of the Vale
 - Cards with several versions (same name, same set) count every version; known overcount, mentioned on the page
 - Spoilers: the user avoids campaign story spoilers. Page text stays neutral, no story events or scenario roles
-- `npm run build` fails on unknown set codes, weights outside 0..1 and the reserved scenario id `once`
+- Skill-test filter (`hasSkillTest` in src/count.js): enemies with fight/evade, locations with shroud, treacheries whose text has the word "test". Heuristic; reactive treacheries still count. traits.json has a `tested` copy of every view
+- `npm run build` fails on unknown set codes, weights outside 0..1 and the reserved scenario ids `once` and `tested`
 
 ## Content rules (copyright)
 - Commit only derived data (trait names and counts), never the ArkhamDB dump

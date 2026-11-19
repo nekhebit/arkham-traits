@@ -37,6 +37,9 @@ export function scopeOf(campaign, scenarioId = null, mode = 'expected') {
   return { parts: scenarios.map((s) => ({ sets: s.sets, weight: parseWeight(s.weight) })) };
 }
 
+// Scenario ids the page uses as URL flags (#campaign/once, #campaign/tested).
+export const RESERVED_IDS = ['once', 'tested'];
+
 // Problems in campaigns.json that would silently miscount.
 // Returns [{ campaign, scenario, problem }].
 export function campaignProblems(cards, campaigns) {
@@ -46,7 +49,7 @@ export function campaignProblems(cards, campaigns) {
       const problems = s.sets.filter((set) => !known.has(set)).map((set) => `unknown encounter set "${set}"`);
       const w = parseWeight(s.weight);
       if (!(w >= 0 && w <= 1)) problems.push(`weight ${JSON.stringify(s.weight)} is not between 0 and 1`);
-      if (scenario === 'once') problems.push('"once" is reserved for the page URL');
+      if (RESERVED_IDS.includes(scenario)) problems.push(`"${scenario}" is reserved for the page URL`);
       return problems.map((problem) => ({ campaign, scenario, problem }));
     }),
   );
@@ -57,7 +60,19 @@ export function campaignProblems(cards, campaigns) {
 // the linked card) counts as half a copy per side: you only test against the
 // side in play, and we don't know which one that is. A side of a type we
 // don't count (an asset or act front, say) still takes its half.
-export function campaignCards(cards, scope) {
+// Heuristic: can Grizzled apply to this card? Enemies need a fight or evade
+// value, locations a shroud value, treacheries the word "test" in their text.
+// A treachery that only reacts to other tests ("after you fail a test")
+// still counts, so treachery numbers may be a bit high.
+export function hasSkillTest(card) {
+  const text = card.real_text ?? card.text ?? '';
+  if (card.type_code === 'treachery') return /\btests?\b/i.test(text);
+  if (card.type_code === 'location') return card.shroud != null || /\btests?\b/i.test(text);
+  return card.enemy_fight != null || card.enemy_evade != null || /\btests?\b/i.test(text);
+}
+
+// options.testedOnly: keep only cards where hasSkillTest() is true.
+export function campaignCards(cards, scope, { testedOnly = false } = {}) {
   // Multiplier per encounter set; null means "select by pack, multiplier 1".
   let perSet = null;
   if (scope.parts) {
@@ -73,6 +88,7 @@ export function campaignCards(cards, scope) {
   const backs = new Set(cards.map((c) => c.linked_to_code).filter(Boolean));
   return cards
     .filter((c) => c.encounter_code && COUNTED_TYPES.includes(c.type_code) && multiplier(c) > 0)
+    .filter((c) => !testedOnly || hasSkillTest(c))
     .map((c) => {
       const twoSided = Boolean(c.linked_to_code) || backs.has(c.code);
       return { ...c, weight: (c.quantity ?? 1) * (twoSided ? 0.5 : 1) * multiplier(c) };
@@ -81,9 +97,9 @@ export function campaignCards(cards, scope) {
 
 // Copies that carry both traits, for every pair that appears together.
 // Returns [[traitA, traitB, copies]] with traitA < traitB, sorted by copies.
-export function countOverlaps(cards, scope) {
+export function countOverlaps(cards, scope, options = {}) {
   const both = new Map();
-  for (const card of campaignCards(cards, scope)) {
+  for (const card of campaignCards(cards, scope, options)) {
     const qty = card.weight;
     const traits = [...new Set(splitTraits(card.traits))].sort();
     for (let i = 0; i < traits.length; i++) {
@@ -100,8 +116,8 @@ export function countOverlaps(cards, scope) {
 
 // Returns { cards, copies, traits: [{ trait, total, share, byType }] },
 // sorted by total copies (descending), then trait name.
-export function countTraits(cards, scope) {
-  const selected = campaignCards(cards, scope);
+export function countTraits(cards, scope, options = {}) {
+  const selected = campaignCards(cards, scope, options);
   const byTrait = new Map();
   let copies = 0;
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { campaignProblems, countOverlaps, countTraits, parseWeight, scopeOf, splitTraits } from '../src/count.js';
+import { campaignProblems, countOverlaps, countTraits, hasSkillTest, parseWeight, scopeOf, splitTraits } from '../src/count.js';
 import { rankPairs } from '../docs/pairs.js';
 
 const campaign = { name: 'Test', packs: ['p1'] };
@@ -151,12 +151,37 @@ test('campaignProblems reports unknown sets, bad weights and reserved ids', () =
         s: { name: 'S', sets: ['rock', 'rokc'] },
         t: { name: 'T', weight: '3/2', sets: ['rock'] },
         once: { name: 'Once', sets: ['rock'] },
+        tested: { name: 'Tested', sets: ['rock'] },
       },
     },
   };
   assert.deepEqual(
     campaignProblems(scenarioCards, bad).map((p) => `${p.scenario}: ${p.problem}`),
-    ['s: unknown encounter set "rokc"', 't: weight "3/2" is not between 0 and 1', 'once: "once" is reserved for the page URL'],
+    ['s: unknown encounter set "rokc"', 't: weight "3/2" is not between 0 and 1', 'once: "once" is reserved for the page URL', 'tested: "tested" is reserved for the page URL'],
   );
   assert.deepEqual(campaignProblems(scenarioCards, { withScenarios }), []);
+});
+
+test('hasSkillTest: fight/evade, shroud, or "test" in treachery text', () => {
+  assert.equal(hasSkillTest({ type_code: 'enemy', enemy_fight: 3, enemy_evade: 2 }), true);
+  assert.equal(hasSkillTest({ type_code: 'enemy', enemy_fight: null, enemy_evade: null, text: 'Aloof.' }), false);
+  assert.equal(hasSkillTest({ type_code: 'location', shroud: 2 }), true);
+  assert.equal(hasSkillTest({ type_code: 'treachery', text: 'Revelation - Test [willpower] (3).' }), true);
+  assert.equal(hasSkillTest({ type_code: 'treachery', real_text: 'Revelation - Place 1 doom on the agenda.' }), false);
+  assert.equal(hasSkillTest({ type_code: 'treachery', text: 'Contestant.' }), false); // whole word only
+});
+
+test('testedOnly drops cards without a skill test', () => {
+  const mixed = [
+    card('treachery', 'Hazard.', 2, { text: 'Test [agility] (2).' }),
+    card('treachery', 'Hazard. Power.', 3, { text: 'Place 1 doom.' }),
+    card('enemy', 'Creature.', 1, { enemy_fight: 2, enemy_evade: 2 }),
+  ];
+  const all = countTraits(mixed, campaign);
+  const tested = countTraits(mixed, campaign, { testedOnly: true });
+  assert.equal(all.copies, 6);
+  assert.equal(tested.copies, 3);
+  assert.equal(byName(tested.traits).Hazard.total, 2);
+  assert.equal(byName(tested.traits).Power, undefined);
+  assert.deepEqual(countOverlaps(mixed, campaign, { testedOnly: true }), []);
 });

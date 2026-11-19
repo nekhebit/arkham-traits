@@ -1,5 +1,5 @@
 // Prints trait counts for a campaign.
-// Usage: npm run report -- <campaign-id> [--scenario id | --once] [--top N] [--pairs [--with Trait]] [--sets]
+// Usage: npm run report -- <campaign-id> [--scenario id | --once] [--tested] [--top N] [--pairs [--with Trait]] [--sets]
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { COUNTED_TYPES, countOverlaps, countTraits, scopeOf } from '../src/count.js';
@@ -20,7 +20,7 @@ const [id] = args.filter((a) => !a.startsWith('--') && !optionValues.has(a));
 const top = Number(option('--top') ?? 20);
 
 if (!id || !campaigns[id]) {
-  console.log('Usage: npm run report -- <campaign-id> [--scenario id | --once] [--top N] [--pairs [--with Trait]] [--sets]\nCampaigns:');
+  console.log('Usage: npm run report -- <campaign-id> [--scenario id | --once] [--tested] [--top N] [--pairs [--with Trait]] [--sets]\nCampaigns:');
   for (const [key, c] of Object.entries(campaigns)) console.log(`  ${key}  ${c.name}`);
   process.exit(id ? 1 : 0);
 }
@@ -43,8 +43,9 @@ const scope = scopeOf(campaign, scenarioId, args.includes('--once') ? 'once' : '
 const title = scenarioId
   ? `${campaign.scenarios[scenarioId].name} (${campaign.name})`
   : `${campaign.name}, ${scope.parts ? 'expected per playthrough' : 'each set once'}`;
-const result = countTraits(cards, scope);
-console.log(`${title}: ${fmt(result.copies)} encounter copies\n`);
+const options = { testedOnly: args.includes('--tested') };
+const result = countTraits(cards, scope, options);
+console.log(`${title}${options.testedOnly ? ', cards with a skill test' : ''}: ${fmt(result.copies)} encounter copies\n`);
 
 if (args.includes('--sets')) {
   const sets =
@@ -63,7 +64,7 @@ if (args.includes('--pairs')) {
     console.error(`Unknown trait "${fixed}" for this campaign.`);
     process.exit(1);
   }
-  const pairs = rankPairs(result.traits, countOverlaps(cards, scope), { fixed, limit: top });
+  const pairs = rankPairs(result.traits, countOverlaps(cards, scope, options), { fixed, limit: top });
   console.log(['Pair'.padEnd(28), 'Cover', 'Share', '  Both'].join('  '));
   for (const p of pairs) {
     const share = `${((p.coverage / result.copies) * 100).toFixed(1)}%`;
