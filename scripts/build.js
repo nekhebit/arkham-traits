@@ -2,7 +2,8 @@
 // Contains only trait names and counts (see CLAUDE.md content rules).
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { COUNTED_TYPES, campaignProblems, countOverlaps, countTraits, scopeOf } from '../src/count.js';
+import { COUNTED_TYPES, campaignCards, campaignProblems, countOverlaps, countTraits, scopeOf } from '../src/count.js';
+import { bestSets, upgradePath } from '../src/sets.js';
 
 const ROOT = join(import.meta.dirname, '..');
 const readJson = async (path) => JSON.parse(await readFile(join(ROOT, path), 'utf8'));
@@ -40,6 +41,11 @@ function countsFor(scope, options) {
     traits: traits.map(({ trait, total, byType }) => ({ trait, total, byType })),
     // Only non-zero pairs; the page derives coverage for all pairs (docs/pairs.js).
     overlaps: countOverlaps(cards, scope, options),
+    // For an upgraded Grizzled: best path 2 -> 3 -> 4 traits, and top 4-trait sets.
+    upgrades: (() => {
+      const selected = campaignCards(cards, scope, options);
+      return { path: upgradePath(selected, 4), best4: bestSets(selected, 4, 5) };
+    })(),
   };
 }
 const counts = (scope) => ({ ...countsFor(scope), tested: countsFor(scope, { testedOnly: true }) });

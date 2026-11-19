@@ -185,3 +185,25 @@ test('testedOnly drops cards without a skill test', () => {
   assert.equal(byName(tested.traits).Power, undefined);
   assert.deepEqual(countOverlaps(mixed, campaign, { testedOnly: true }), []);
 });
+
+test('bestSets and upgradePath maximise coverage', async () => {
+  const { bestSets, upgradePath } = await import('../src/sets.js');
+  const deck = [
+    card('treachery', 'Hazard.', 4),
+    card('enemy', 'Mutated. Monster.', 3),
+    card('location', 'Dark.', 2),
+    card('treachery', 'Power.', 1),
+    card('enemy', 'Monster.', 1),
+  ];
+  const selected = (await import('../src/count.js')).campaignCards(deck, campaign);
+  const [best3] = bestSets(selected, 3, 1);
+  assert.deepEqual(best3, { traits: ['Hazard', 'Monster', 'Dark'], coverage: 10 });
+  assert.deepEqual(
+    upgradePath(selected, 4).map((p) => [p.traits.join('+'), p.coverage]),
+    [
+      ['Hazard+Monster', 8],
+      ['Hazard+Monster+Dark', 10],
+      ['Hazard+Monster+Dark+Power', 11],
+    ],
+  );
+});

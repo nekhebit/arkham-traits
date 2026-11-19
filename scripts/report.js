@@ -1,8 +1,9 @@
 // Prints trait counts for a campaign.
-// Usage: npm run report -- <campaign-id> [--scenario id | --once] [--tested] [--top N] [--pairs [--with Trait]] [--sets]
+// Usage: npm run report -- <campaign-id> [--scenario id | --once] [--tested] [--top N] [--pairs [--with Trait]] [--best] [--sets]
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { COUNTED_TYPES, countOverlaps, countTraits, scopeOf } from '../src/count.js';
+import { COUNTED_TYPES, campaignCards, countOverlaps, countTraits, scopeOf } from '../src/count.js';
+import { bestSets, upgradePath } from '../src/sets.js';
 import { rankPairs } from '../docs/pairs.js';
 
 const fmt = (n) => {
@@ -20,7 +21,7 @@ const [id] = args.filter((a) => !a.startsWith('--') && !optionValues.has(a));
 const top = Number(option('--top') ?? 20);
 
 if (!id || !campaigns[id]) {
-  console.log('Usage: npm run report -- <campaign-id> [--scenario id | --once] [--tested] [--top N] [--pairs [--with Trait]] [--sets]\nCampaigns:');
+  console.log('Usage: npm run report -- <campaign-id> [--scenario id | --once] [--tested] [--top N] [--pairs [--with Trait]] [--best] [--sets]\nCampaigns:');
   for (const [key, c] of Object.entries(campaigns)) console.log(`  ${key}  ${c.name}`);
   process.exit(id ? 1 : 0);
 }
@@ -55,6 +56,17 @@ if (args.includes('--sets')) {
   const rows = sets.map((set) => [set, countTraits(cards, { sets: [set] }).copies]).sort((a, b) => b[1] - a[1]);
   console.log(['Encounter set'.padEnd(28), 'Copies'].join('  '));
   for (const [set, copies] of rows) console.log([set.padEnd(28), fmt(copies).padStart(6)].join('  '));
+  process.exit(0);
+}
+
+if (args.includes('--best')) {
+  const selected = campaignCards(cards, scope, options);
+  const line = (s) =>
+    [s.traits.join(' + ').padEnd(44), fmt(s.coverage).padStart(6), `${((s.coverage / result.copies) * 100).toFixed(1)}%`.padStart(6)].join('  ');
+  console.log('Upgrade path');
+  for (const s of upgradePath(selected, 4)) console.log('  ' + line(s));
+  console.log('\nBest 4-trait sets');
+  for (const s of bestSets(selected, 4, 5)) console.log('  ' + line(s));
   process.exit(0);
 }
 

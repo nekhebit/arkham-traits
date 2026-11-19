@@ -1,6 +1,6 @@
 {
   "name": "arkham-traits",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Pick the two traits for the Grizzled skill card by counting trait frequency on encounter cards per Arkham Horror LCG campaign.",
   "type": "module",
   "license": "AGPL-3.0-or-later",

@@ -108,6 +108,8 @@
     min-height: 24px; border-radius: 4px; cursor: default;
   }
   .pairs .row { grid-template-columns: 190px 1fr; min-height: 28px; }
+  .sets .row { grid-template-columns: 250px 1fr; min-height: 28px; }
+  .subhead { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 16px 0 6px; }
   .row:hover, .row:focus-visible { background: var(--row-hover); outline: none; }
   .label { font-size: 13px; text-align: right; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .track { display: flex; align-items: center; gap: 8px; align-self: stretch; border-left: 1px solid var(--axis); }
@@ -141,7 +143,8 @@
   @media (max-width: 480px) {
     .row { grid-template-columns: 92px 1fr; gap: 8px; }
     .pairs .row { grid-template-columns: 120px 1fr; }
-    .pairs .label { white-space: normal; line-height: 1.2; padding: 2px 0; }
+    .sets .row { grid-template-columns: 140px 1fr; }
+    .pairs .label, .sets .label { white-space: normal; line-height: 1.2; padding: 2px 0; }
     select { min-width: 0; width: 100%; }
   }
 </style>
@@ -196,6 +199,15 @@
       <summary>Show as table</summary>
       <div class="table-wrap"><table id="pair-table"></table></div>
     </details>
+  </section>
+
+  <section class="card" aria-labelledby="sets-title">
+    <h2 id="sets-title" class="summary"></h2>
+    <p class="note">Grizzled can be upgraded to record up to 4 traits. The path starts with the best pair and each step adds the trait that helps on the most extra copies. Searched among the 16 most common traits.</p>
+    <h3 class="subhead">Upgrade path</h3>
+    <div class="chart sets" id="path" role="list"></div>
+    <h3 class="subhead">Best sets of 4</h3>
+    <div class="chart sets" id="best4" role="list"></div>
   </section>
 
   <div class="tooltip" id="tooltip" hidden></div>

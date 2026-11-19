@@ -268,6 +268,30 @@ function renderPairs(campaign) {
   );
 }
 
+// ---- Best sets (upgraded Grizzled) ------------------------------------------
+
+function renderUpgrades(campaign) {
+  const { path, best4 } = campaign.upgrades;
+  const max = Math.max(1, ...path.map((p) => p.coverage), ...best4.map((p) => p.coverage));
+  const rows = (sets) =>
+    sets.map((p) => {
+      const name = p.traits.join(' + ');
+      return barRow({
+        label: name,
+        value: p.coverage,
+        ratio: p.coverage / max,
+        parts: [{ value: p.coverage, color: 'var(--pair-both)' }],
+        ariaLabel: `${name}: helps on ${fmt(p.coverage)} copies, ${pct(p.coverage, campaign)}.`,
+        tip: {
+          title: `${p.traits.length} traits: ${fmt(p.coverage)} (${pct(p.coverage, campaign)})`,
+          lines: p.traits.map((t) => ({ color: 'var(--pair-both)', label: t, value: campaign.traits.find((x) => x.trait === t)?.total ?? 0 })),
+        },
+      });
+    });
+  $('path').replaceChildren(...rows(path));
+  $('best4').replaceChildren(...rows(best4));
+}
+
 // ---- Render -----------------------------------------------------------------
 
 function render() {
@@ -275,8 +299,10 @@ function render() {
   const { view, title, scope } = currentView();
   renderTraits(view, title);
   $('pairs-title').textContent = `Best pairs · ${scope}`;
+  $('sets-title').textContent = `Best sets for an upgraded Grizzled · ${scope}`;
   fillFixedSelect(view);
   renderPairs(view);
+  renderUpgrades(view);
 }
 
 render();
