@@ -45,6 +45,8 @@ $('pair-legend').append(...PAIR_PARTS.map((p) => legendItem(p.color, p.label)));
 
 // ---- Shared pieces ----------------------------------------------------------
 
+// Two-sided cards count half per side, so counts can end in .5.
+const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 const pct = (n, campaign) => `${((n / campaign.copies) * 100).toFixed(1)}%`;
 
 // parts: [{ value, color }]; ratio: bar length relative to the longest bar.
@@ -55,7 +57,7 @@ function barRow({ label, value, ratio, parts, ariaLabel, tip }) {
   const bar = el('div', { className: 'bar', style: `width:calc((100% - ${LABEL_ROOM}px) * ${ratio})` }, segs);
   const row = el('div', { className: 'row', tabIndex: 0, role: 'listitem' }, [
     el('span', { className: 'label', textContent: label, title: label }),
-    el('div', { className: 'track' }, [bar, el('span', { className: 'value', textContent: value })]),
+    el('div', { className: 'track' }, [bar, el('span', { className: 'value', textContent: fmt(value) })]),
   ]);
   row.setAttribute('aria-label', ariaLabel);
   const show = () => showTip(row, tip);
@@ -75,7 +77,7 @@ function showTip(row, { title, lines }) {
       el('div', { className: 'line' }, [
         el('span', { className: 'swatch', style: `background:${l.color}` }),
         el('span', { textContent: l.label }),
-        el('span', { textContent: l.value }),
+        el('span', { textContent: fmt(l.value) }),
       ]),
     ),
   );
@@ -95,7 +97,7 @@ function hideTip() {
 function table(target, headers, rows) {
   $(target).replaceChildren(
     el('thead', {}, [el('tr', {}, headers.map((h) => el('th', { textContent: h })))]),
-    el('tbody', {}, rows.map((r) => el('tr', {}, r.map((v) => el('td', { textContent: v }))))),
+    el('tbody', {}, rows.map((r) => el('tr', {}, r.map((v) => el('td', { textContent: typeof v === 'number' ? fmt(v) : v }))))),
   );
 }
 
@@ -103,7 +105,7 @@ function table(target, headers, rows) {
 
 function renderTraits(campaign) {
   const max = Math.max(...campaign.traits.map((t) => t.total));
-  $('chart-title').textContent = `${campaign.name}: ${campaign.cards} cards, ${campaign.copies} copies`;
+  $('chart-title').textContent = `${campaign.name}: ${fmt(campaign.copies)} encounter copies`;
 
   $('chart').replaceChildren(
     ...campaign.traits.map((t) => {
@@ -113,11 +115,11 @@ function renderTraits(campaign) {
         value: t.total,
         ratio: t.total / max,
         parts: types.map((type) => ({ value: t.byType[type], color: typeColor(type) })),
-        ariaLabel: `${t.trait}: ${t.total} copies, ${pct(t.total, campaign)} of encounter cards. ${present
-          .map((type) => `${TYPE_LABELS[type]} ${t.byType[type]}`)
+        ariaLabel: `${t.trait}: ${fmt(t.total)} copies, ${pct(t.total, campaign)} of encounter cards. ${present
+          .map((type) => `${TYPE_LABELS[type]} ${fmt(t.byType[type])}`)
           .join(', ')}`,
         tip: {
-          title: `${t.trait}: ${t.total} (${pct(t.total, campaign)})`,
+          title: `${t.trait}: ${fmt(t.total)} (${pct(t.total, campaign)})`,
           lines: present.map((type) => ({ color: typeColor(type), label: TYPE_LABELS[type], value: t.byType[type] })),
         },
       });
@@ -138,7 +140,7 @@ function fillFixedSelect(campaign) {
   const keep = fixed.value;
   fixed.replaceChildren(
     el('option', { value: '', textContent: 'Any' }),
-    ...campaign.traits.map((t) => el('option', { value: t.trait, textContent: `${t.trait} (${t.total})` })),
+    ...campaign.traits.map((t) => el('option', { value: t.trait, textContent: `${t.trait} (${fmt(t.total)})` })),
   );
   fixed.value = campaign.traits.some((t) => t.trait === keep) ? keep : '';
 }
@@ -160,9 +162,9 @@ function renderPairs(campaign) {
           { value: p.overlap, color: PAIR_PARTS[0].color },
           { value: single, color: PAIR_PARTS[1].color },
         ],
-        ariaLabel: `${name}: helps on ${p.coverage} copies, ${pct(p.coverage, campaign)}. Both traits on ${p.overlap}.`,
+        ariaLabel: `${name}: helps on ${fmt(p.coverage)} copies, ${pct(p.coverage, campaign)}. Both traits on ${fmt(p.overlap)}.`,
         tip: {
-          title: `${name}: ${p.coverage} (${pct(p.coverage, campaign)})`,
+          title: `${name}: ${fmt(p.coverage)} (${pct(p.coverage, campaign)})`,
           lines: [
             { color: PAIR_PARTS[0].color, label: 'Both traits', value: p.overlap },
             { color: PAIR_PARTS[1].color, label: `Only ${p.a}`, value: p.onlyA },

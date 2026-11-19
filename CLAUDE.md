@@ -7,8 +7,8 @@ by counting trait frequency on encounter cards per campaign.
 - Source: ArkhamDB public API (`/api/public/cards/?encounter=1`, `/api/public/packs/`)
 - Cached in `data/cache/` (not committed; download with the fetch script)
 - Counted types: enemy, treachery, location, enemy_location
-- Includes hidden flip sides (you test against the side in play)
 - Weight: `quantity` (copies per card)
+- Two-sided cards (front has `linked_to_code`, back is the hidden linked card) count ½ × quantity per side, even when one side is an uncounted type (asset, act). The page shows this as a disclaimer
 - `campaigns.json`: hand-written mapping of campaign -> packs (-> scenarios later)
 
 ## Content rules (copyright)

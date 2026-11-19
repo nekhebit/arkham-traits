@@ -14,15 +14,20 @@ const card = (type_code, traits, quantity, extra = {}) => ({
 });
 
 const cards = [
-  card('enemy', 'Creature. Monster.', 2),
-  card('enemy', 'Monster. Elite.', 1, { hidden: true }), // flip side: counted
-  card('treachery', 'Hazard.', 3),
-  card('location', 'Room. Dormant.', 1),
-  card('enemy_location', 'Room. Monster. Monster.', 1), // duplicate trait counts once
+  card('enemy', 'Creature. Monster.', 2), // 2 copies
+  card('treachery', 'Hazard.', 3), // 3 copies
+  // Two-sided: a room that flips into an enemy-location. Half a copy per side.
+  card('location', 'Room. Dormant.', 1, { code: 'c', linked_to_code: 'cb' }),
+  card('enemy_location', 'Room. Monster. Monster.', 1, { code: 'cb', hidden: true }), // duplicate trait counts once
+  // Two-sided with an uncounted front: an asset whose back is an enemy.
+  card('asset', 'Ally. Resident.', 1, { code: 'e', linked_to_code: 'eb', encounter_code: null }),
+  card('enemy', 'Humanoid. Resident. Elite.', 1, { code: 'eb', hidden: true }),
   card('asset', 'Item.', 2), // not a counted type
   card('enemy', 'Monster.', 1, { encounter_code: null }), // weakness: no encounter set
   card('enemy', 'Creature.', 4, { pack_code: 'p2' }), // other campaign
 ];
+
+const byName = (traits) => Object.fromEntries(traits.map((t) => [t.trait, t]));
 
 test('splitTraits splits on periods and trims', () => {
   assert.deepEqual(splitTraits('Hemlock Vale. Central.'), ['Hemlock Vale', 'Central']);
@@ -34,23 +39,32 @@ test('splitTraits splits on periods and trims', () => {
 test('countTraits filters cards and weights by quantity', () => {
   const r = countTraits(cards, campaign);
   assert.equal(r.cards, 5);
-  assert.equal(r.copies, 8);
-  const byName = Object.fromEntries(r.traits.map((t) => [t.trait, t]));
-  assert.equal(byName.Monster.total, 4);
-  assert.deepEqual(byName.Monster.byType, { enemy: 3, treachery: 0, location: 0, enemy_location: 1 });
-  assert.equal(byName.Creature.total, 2);
-  assert.equal(byName.Hazard.total, 3);
-  assert.equal(byName.Room.total, 2);
-  assert.equal(byName.Item, undefined);
-  assert.equal(r.traits[0].trait, 'Monster');
+  assert.equal(r.copies, 6.5); // 2 + 3 + 0.5 + 0.5 + 0.5
+  const t = byName(r.traits);
+  assert.equal(t.Hazard.total, 3);
+  assert.equal(t.Creature.total, 2);
+  assert.equal(t.Item, undefined);
+  assert.equal(t.Ally, undefined);
+  assert.equal(r.traits[0].trait, 'Hazard');
 });
 
-test('countOverlaps counts copies with both traits', () => {
+test('two-sided cards count half a copy per side', () => {
+  const t = byName(countTraits(cards, campaign).traits);
+  assert.equal(t.Room.total, 1); // 0.5 front + 0.5 back
+  assert.equal(t.Dormant.total, 0.5);
+  assert.equal(t.Monster.total, 2.5);
+  assert.deepEqual(t.Monster.byType, { enemy: 2, treachery: 0, location: 0, enemy_location: 0.5 });
+  assert.equal(t.Resident.total, 0.5); // enemy back of an asset
+});
+
+test('countOverlaps counts weighted copies with both traits', () => {
   assert.deepEqual(countOverlaps(cards, campaign), [
     ['Creature', 'Monster', 2],
-    ['Dormant', 'Room', 1],
-    ['Elite', 'Monster', 1],
-    ['Monster', 'Room', 1],
+    ['Dormant', 'Room', 0.5],
+    ['Elite', 'Humanoid', 0.5],
+    ['Elite', 'Resident', 0.5],
+    ['Humanoid', 'Resident', 0.5],
+    ['Monster', 'Room', 0.5],
   ]);
 });
 
@@ -58,23 +72,22 @@ test('rankPairs uses coverage = A + B - both', () => {
   const { traits } = countTraits(cards, campaign);
   const overlaps = countOverlaps(cards, campaign);
   const [best] = rankPairs(traits, overlaps);
-  assert.deepEqual(best, { a: 'Monster', b: 'Hazard', coverage: 7, overlap: 0, onlyA: 4, onlyB: 3 });
+  assert.deepEqual(best, { a: 'Hazard', b: 'Monster', coverage: 5.5, overlap: 0, onlyA: 3, onlyB: 2.5 });
 
-  const creatureMonster = rankPairs(traits, overlaps).find((p) => p.a === 'Monster' && p.b === 'Creature');
-  assert.equal(creatureMonster.coverage, 4); // 4 + 2 - 2
-  assert.equal(creatureMonster.overlap, 2);
+  const pair = rankPairs(traits, overlaps).find((p) => p.a === 'Monster' && p.b === 'Creature');
+  assert.equal(pair.coverage, 2.5); // 2.5 + 2 - 2
+  assert.equal(pair.overlap, 2);
 });
 
 test('rankPairs with a fixed trait lists it first', () => {
   const { traits } = countTraits(cards, campaign);
   const pairs = rankPairs(traits, countOverlaps(cards, campaign), { fixed: 'Creature', limit: 2 });
-  assert.equal(pairs.length, 2);
   assert.ok(pairs.every((p) => p.a === 'Creature'));
   assert.deepEqual(
     pairs.map((p) => [p.b, p.coverage]),
     [
       ['Hazard', 5],
-      ['Monster', 4],
+      ['Room', 3],
     ],
   );
 });

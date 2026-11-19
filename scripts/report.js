@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { COUNTED_TYPES, countOverlaps, countTraits } from '../src/count.js';
 import { rankPairs } from '../docs/pairs.js';
 
+const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 const ROOT = join(import.meta.dirname, '..');
 const readJson = async (path) => JSON.parse(await readFile(join(ROOT, path), 'utf8'));
 
@@ -30,7 +31,7 @@ try {
 }
 
 const result = countTraits(cards, campaigns[id]);
-console.log(`${campaigns[id].name}: ${result.cards} cards, ${result.copies} copies\n`);
+console.log(`${campaigns[id].name}: ${result.cards} cards, ${fmt(result.copies)} copies\n`);
 
 if (args.includes('--pairs')) {
   const fixed = option('--with') ?? null;
@@ -43,7 +44,7 @@ if (args.includes('--pairs')) {
   for (const p of pairs) {
     const share = `${((p.coverage / result.copies) * 100).toFixed(1)}%`;
     console.log(
-      [`${p.a} + ${p.b}`.padEnd(28), String(p.coverage).padStart(5), share.padStart(5), String(p.overlap).padStart(6)].join(
+      [`${p.a} + ${p.b}`.padEnd(28), fmt(p.coverage).padStart(5), share.padStart(5), fmt(p.overlap).padStart(6)].join(
         '  ',
       ),
     );
@@ -58,9 +59,9 @@ for (const t of result.traits.slice(0, top)) {
   console.log(
     [
       t.trait.padEnd(16),
-      String(t.total).padStart(5),
+      fmt(t.total).padStart(5),
       `${(t.share * 100).toFixed(1)}%`.padStart(5),
-      ...COUNTED_TYPES.map((type) => String(t.byType[type] || '').padStart(6)),
+      ...COUNTED_TYPES.map((type) => (t.byType[type] ? fmt(t.byType[type]) : '').padStart(6)),
     ].join('  '),
   );
 }

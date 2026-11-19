@@ -12,13 +12,21 @@ export function splitTraits(traits) {
     .filter(Boolean);
 }
 
-// Encounter cards of the counted types in the campaign's packs.
-// Hidden flip sides are kept: you test against the side in play.
+// Encounter cards of the counted types in the campaign's packs, each with a
+// `weight` in copies. A two-sided card (front with `linked_to_code`, back is
+// the linked card) counts as half a copy per side: you only test against the
+// side in play, and we don't know which one that is. A side of a type we
+// don't count (an asset or act front, say) still takes its half.
 export function campaignCards(cards, campaign) {
   const packs = new Set(campaign.packs);
-  return cards.filter(
-    (c) => packs.has(c.pack_code) && c.encounter_code && COUNTED_TYPES.includes(c.type_code),
-  );
+  const inPacks = cards.filter((c) => packs.has(c.pack_code));
+  const backs = new Set(inPacks.map((c) => c.linked_to_code).filter(Boolean));
+  return inPacks
+    .filter((c) => c.encounter_code && COUNTED_TYPES.includes(c.type_code))
+    .map((c) => {
+      const twoSided = Boolean(c.linked_to_code) || backs.has(c.code);
+      return { ...c, weight: (c.quantity ?? 1) * (twoSided ? 0.5 : 1) };
+    });
 }
 
 // Copies that carry both traits, for every pair that appears together.
@@ -26,7 +34,7 @@ export function campaignCards(cards, campaign) {
 export function countOverlaps(cards, campaign) {
   const both = new Map();
   for (const card of campaignCards(cards, campaign)) {
-    const qty = card.quantity ?? 1;
+    const qty = card.weight;
     const traits = [...new Set(splitTraits(card.traits))].sort();
     for (let i = 0; i < traits.length; i++) {
       for (let j = i + 1; j < traits.length; j++) {
@@ -48,7 +56,7 @@ export function countTraits(cards, campaign) {
   let copies = 0;
 
   for (const card of selected) {
-    const qty = card.quantity ?? 1;
+    const qty = card.weight;
     copies += qty;
     for (const trait of new Set(splitTraits(card.traits))) {
       let entry = byTrait.get(trait);

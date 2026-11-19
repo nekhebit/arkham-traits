@@ -10,26 +10,16 @@
   "fhv": {
    "name": "The Feast of Hemlock Vale",
    "cards": 207,
-   "copies": 309,
+   "copies": 264.5,
    "traits": [
     {
      "trait": "Mutated",
-     "total": 51,
+     "total": 50.5,
      "byType": {
-      "enemy": 51,
+      "enemy": 50.5,
       "treachery": 0,
       "location": 0,
       "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Elite",
-     "total": 47,
-     "byType": {
-      "enemy": 34,
-      "treachery": 0,
-      "location": 0,
-      "enemy_location": 13
      }
     },
     {
@@ -43,23 +33,33 @@
      }
     },
     {
-     "trait": "Monster",
-     "total": 43,
-     "byType": {
-      "enemy": 30,
-      "treachery": 0,
-      "location": 0,
-      "enemy_location": 13
-     }
-    },
-    {
      "trait": "Creature",
-     "total": 40,
+     "total": 37.5,
      "byType": {
-      "enemy": 40,
+      "enemy": 37.5,
       "treachery": 0,
       "location": 0,
       "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Monster",
+     "total": 35.5,
+     "byType": {
+      "enemy": 28.5,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 7
+     }
+    },
+    {
+     "trait": "Elite",
+     "total": 29.5,
+     "byType": {
+      "enemy": 22.5,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 7
      }
     },
     {
@@ -70,16 +70,6 @@
       "treachery": 7,
       "location": 0,
       "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Room",
-     "total": 25,
-     "byType": {
-      "enemy": 0,
-      "treachery": 0,
-      "location": 12,
-      "enemy_location": 13
      }
     },
     {
@@ -113,36 +103,6 @@
      }
     },
     {
-     "trait": "Hemlock Vale",
-     "total": 20,
-     "byType": {
-      "enemy": 0,
-      "treachery": 0,
-      "location": 20,
-      "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Colour",
-     "total": 17,
-     "byType": {
-      "enemy": 8,
-      "treachery": 9,
-      "location": 0,
-      "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Humanoid",
-     "total": 17,
-     "byType": {
-      "enemy": 17,
-      "treachery": 0,
-      "location": 0,
-      "enemy_location": 0
-     }
-    },
-    {
      "trait": "Cave",
      "total": 16,
      "byType": {
@@ -163,6 +123,16 @@
      }
     },
     {
+     "trait": "Colour",
+     "total": 15,
+     "byType": {
+      "enemy": 6,
+      "treachery": 9,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
      "trait": "Forest",
      "total": 15,
      "byType": {
@@ -173,22 +143,22 @@
      }
     },
     {
-     "trait": "Abomination",
+     "trait": "Room",
      "total": 13,
-     "byType": {
-      "enemy": 13,
-      "treachery": 0,
-      "location": 0,
-      "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Dormant",
-     "total": 12,
      "byType": {
       "enemy": 0,
       "treachery": 0,
-      "location": 12,
+      "location": 6,
+      "enemy_location": 7
+     }
+    },
+    {
+     "trait": "Humanoid",
+     "total": 12.5,
+     "byType": {
+      "enemy": 12.5,
+      "treachery": 0,
+      "location": 0,
       "enemy_location": 0
      }
     },
@@ -213,17 +183,7 @@
      }
     },
     {
-     "trait": "Bog",
-     "total": 10,
-     "byType": {
-      "enemy": 0,
-      "treachery": 0,
-      "location": 10,
-      "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Resident",
+     "trait": "Abomination",
      "total": 10,
      "byType": {
       "enemy": 10,
@@ -233,7 +193,7 @@
      }
     },
     {
-     "trait": "Sunken",
+     "trait": "Hemlock Vale",
      "total": 10,
      "byType": {
       "enemy": 0,
@@ -264,21 +224,11 @@
     },
     {
      "trait": "Shattered",
-     "total": 9,
+     "total": 6.5,
      "byType": {
-      "enemy": 4,
+      "enemy": 2,
       "treachery": 0,
-      "location": 5,
-      "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Emissary",
-     "total": 8,
-     "byType": {
-      "enemy": 8,
-      "treachery": 0,
-      "location": 0,
+      "location": 4.5,
       "enemy_location": 0
      }
     },
@@ -289,6 +239,36 @@
       "enemy": 0,
       "treachery": 0,
       "location": 6,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Dormant",
+     "total": 6,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 6,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Resident",
+     "total": 6,
+     "byType": {
+      "enemy": 6,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Bog",
+     "total": 5,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 5,
       "enemy_location": 0
      }
     },
@@ -313,12 +293,22 @@
      }
     },
     {
-     "trait": "Central",
-     "total": 4,
+     "trait": "Sunken",
+     "total": 5,
      "byType": {
       "enemy": 0,
       "treachery": 0,
-      "location": 4,
+      "location": 5,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Emissary",
+     "total": 4,
+     "byType": {
+      "enemy": 4,
+      "treachery": 0,
+      "location": 0,
       "enemy_location": 0
      }
     },
@@ -333,31 +323,21 @@
      }
     },
     {
+     "trait": "Central",
+     "total": 2,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 2,
+      "enemy_location": 0
+     }
+    },
+    {
      "trait": "Curse",
      "total": 2,
      "byType": {
       "enemy": 0,
       "treachery": 2,
-      "location": 0,
-      "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Extradimensional",
-     "total": 1,
-     "byType": {
-      "enemy": 0,
-      "treachery": 0,
-      "location": 1,
-      "enemy_location": 0
-     }
-    },
-    {
-     "trait": "Miskatonic",
-     "total": 1,
-     "byType": {
-      "enemy": 1,
-      "treachery": 0,
       "location": 0,
       "enemy_location": 0
      }
@@ -391,33 +371,53 @@
       "location": 1,
       "enemy_location": 0
      }
+    },
+    {
+     "trait": "Extradimensional",
+     "total": 0.5,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 0.5,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Miskatonic",
+     "total": 0.5,
+     "byType": {
+      "enemy": 0.5,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
     }
    ],
    "overlaps": [
     [
      "Creature",
      "Mutated",
-     36
+     35.5
     ],
     [
      "Monster",
      "Mutated",
-     24
-    ],
-    [
-     "Elite",
-     "Monster",
-     23
+     23.5
     ],
     [
      "Creature",
      "Monster",
-     21
+     20.5
     ],
     [
      "Flora",
      "Mutated",
      18
+    ],
+    [
+     "Elite",
+     "Monster",
+     15.5
     ],
     [
      "Dark",
@@ -427,32 +427,12 @@
     [
      "Creature",
      "Elite",
-     14
-    ],
-    [
-     "Elite",
-     "Room",
-     13
-    ],
-    [
-     "Monster",
-     "Room",
-     13
-    ],
-    [
-     "Dormant",
-     "Room",
-     12
+     11.5
     ],
     [
      "Elite",
      "Mutated",
-     12
-    ],
-    [
-     "Humanoid",
-     "Resident",
-     10
+     11.5
     ],
     [
      "Cave",
@@ -466,32 +446,17 @@
     ],
     [
      "Abomination",
-     "Elite",
-     8
-    ],
-    [
-     "Elite",
-     "Emissary",
-     8
-    ],
-    [
-     "Elite",
-     "Humanoid",
-     8
-    ],
-    [
-     "Elite",
-     "Resident",
-     8
-    ],
-    [
-     "Abomination",
      "Mutated",
      7
     ],
     [
      "Creature",
      "Insect",
+     7
+    ],
+    [
+     "Elite",
+     "Room",
      7
     ],
     [
@@ -502,6 +467,11 @@
     [
      "Insect",
      "Mutated",
+     7
+    ],
+    [
+     "Monster",
+     "Room",
      7
     ],
     [
@@ -518,16 +488,26 @@
      "Creature",
      "Flora",
      6
+    ],
+    [
+     "Dormant",
+     "Room",
+     6
+    ],
+    [
+     "Humanoid",
+     "Resident",
+     6
+    ],
+    [
+     "Abomination",
+     "Elite",
+     5
     ],
     [
      "Blight",
      "Field",
      5
-    ],
-    [
-     "Abomination",
-     "Creature",
-     4
     ],
     [
      "Blight",
@@ -545,33 +525,23 @@
      4
     ],
     [
-     "Central",
-     "Hemlock Vale",
-     4
-    ],
-    [
-     "Colour",
-     "Elite",
-     4
-    ],
-    [
-     "Colour",
-     "Emissary",
-     4
-    ],
-    [
      "Dark",
      "Lair",
      4
     ],
     [
      "Elite",
-     "Shattered",
+     "Emissary",
      4
     ],
     [
-     "Emissary",
-     "Shattered",
+     "Elite",
+     "Humanoid",
+     4
+    ],
+    [
+     "Elite",
+     "Resident",
      4
     ],
     [
@@ -596,7 +566,7 @@
     ],
     [
      "Abomination",
-     "Monster",
+     "Creature",
      2
     ],
     [
@@ -615,6 +585,21 @@
      2
     ],
     [
+     "Central",
+     "Hemlock Vale",
+     2
+    ],
+    [
+     "Colour",
+     "Elite",
+     2
+    ],
+    [
+     "Colour",
+     "Emissary",
+     2
+    ],
+    [
      "Colour",
      "Humanoid",
      2
@@ -630,6 +615,16 @@
      2
     ],
     [
+     "Elite",
+     "Shattered",
+     2
+    ],
+    [
+     "Emissary",
+     "Shattered",
+     2
+    ],
+    [
      "Flora",
      "Monster",
      2
@@ -638,6 +633,11 @@
      "Insect",
      "Monster",
      2
+    ],
+    [
+     "Abomination",
+     "Monster",
+     1
     ],
     [
      "Blight",
@@ -655,18 +655,8 @@
      1
     ],
     [
-     "Extradimensional",
-     "Shattered",
-     1
-    ],
-    [
      "Flora",
      "Humanoid",
-     1
-    ],
-    [
-     "Humanoid",
-     "Miskatonic",
      1
     ],
     [
@@ -683,6 +673,16 @@
      "Rail",
      "Station",
      1
+    ],
+    [
+     "Extradimensional",
+     "Shattered",
+     0.5
+    ],
+    [
+     "Humanoid",
+     "Miskatonic",
+     0.5
     ]
    ]
   }
