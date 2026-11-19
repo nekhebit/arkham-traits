@@ -90,6 +90,7 @@
   .segmented button[aria-pressed="true"] { background: var(--row-hover); color: var(--text-primary); font-weight: 600; }
   .segmented button:focus-visible { outline: 2px solid var(--series-1); outline-offset: -2px; }
   [hidden] { display: none !important; }
+  .mode-note { margin: -4px 0 16px; max-width: 640px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
   .card + .card { margin-top: 24px; }
   .summary { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
@@ -161,11 +162,11 @@
       <button type="button" data-mode="once">Each set once</button>
     </div>
   </div>
+  <p class="note mode-note" id="mode-note"></p>
 
   <section class="card" aria-labelledby="chart-title">
     <h2 id="chart-title" class="summary"></h2>
-    <p class="note" id="mode-note"></p>
-    <p class="note"><strong>Two-sided cards count as half a copy per side.</strong> Some encounter cards flip into another card, for example a room that becomes an enemy. You only test against the side in play, so each side counts as ½. Some cards only appear in certain story branches, so counts in your game may be lower.</p>
+    <p class="note"><strong>Two-sided cards count as half a copy per side.</strong> Some encounter cards flip into another card, for example a room that becomes an enemy. You only test against the side in play, so each side counts as ½. Some cards only appear in certain story branches, so counts in your game may be lower. Cards with several versions count every version, even if only one appears in a game.</p>
     <ul class="legend" id="legend"></ul>
     <div class="chart" id="chart" role="list"></div>
 
@@ -176,7 +177,7 @@
   </section>
 
   <section class="card" aria-labelledby="pairs-title">
-    <h2 id="pairs-title" class="summary">Best pairs</h2>
+    <h2 id="pairs-title" class="summary"></h2>
     <p class="note">Copies with at least one of the two traits, so Grizzled helps. Cards with both traits give 4 wild icons instead of 2. Two-sided cards count as half a copy per side, as above.</p>
     <div class="controls">
       <label for="fixed">First trait</label>

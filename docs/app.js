@@ -83,8 +83,8 @@ function updateModeControls() {
 function currentView() {
   const campaign = data.campaigns[select.value];
   const scenario = campaign.scenarios?.[scenarioSelect.value];
-  if (scenario) return { view: scenario, title: `${scenario.name} (${campaign.name})` };
-  return { view: campaign[mode], title: campaign.name };
+  if (scenario) return { view: scenario, title: `${scenario.name} (${campaign.name})`, scope: scenario.name };
+  return { view: campaign[mode], title: campaign.name, scope: MODE_NOTES[mode][0].replace(/\.$/, '').toLowerCase() };
 }
 
 select.addEventListener('change', () => {
@@ -256,8 +256,9 @@ function renderPairs(campaign) {
 
 function render() {
   updateModeControls();
-  const { view, title } = currentView();
+  const { view, title, scope } = currentView();
   renderTraits(view, title);
+  $('pairs-title').textContent = `Best pairs · ${scope}`;
   fillFixedSelect(view);
   renderPairs(view);
 }

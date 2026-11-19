@@ -12,6 +12,8 @@ by counting trait frequency on encounter cards per campaign.
 - `campaigns.json`: campaign -> scenarios -> encounter sets (`encounter_code`). Scenario lists are based on ArkhamCards (zzorba/arkham-cards-data, no license): copy only set lists, never their files or text, and ask the user before adding another campaign
 - A campaign with scenarios has two page modes: "expected per playthrough" (each scenario's sets x its `weight`, the chance it is played; default) and "each set once" (union of sets). Both include reused Core Set sets; `packs` is only the fallback for campaigns without scenarios
 - Only scenarios with an encounter deck belong in `campaigns.json`. Hemlock Vale: the 4 town parts (prologue, both dawns, final evening) have none and are left out. 7 scenarios have weight 5/7 (6 of 8 played; 15 of 21 equally likely paths include each), the final one has 1
+- Take only the ArkhamCards "gather_encounter_sets" list (the encounter deck), not separate story-asset steps like "gather_residents". Hemlock Vale: `residents` is only in Fate of the Vale
+- Cards with several versions (same name, same set) count every version; known overcount, mentioned on the page
 - Spoilers: the user avoids campaign story spoilers. Page text stays neutral, no story events or scenario roles
 - `npm run build` fails on unknown set codes, weights outside 0..1 and the reserved scenario id `once`
 
