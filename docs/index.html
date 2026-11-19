@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grizzled Trait Picker</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --row-hover: rgba(11, 11, 11, 0.04);
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface: #1a1a19;
+      --text-primary: #f0efec;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --axis: #383835;
+      --border: rgba(255, 255, 255, 0.10);
+      --row-hover: rgba(255, 255, 255, 0.05);
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --row-hover: rgba(255, 255, 255, 0.05);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .lede { color: var(--text-secondary); margin: 0 0 24px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 16px; }
+  label { color: var(--text-secondary); }
+  select {
+    font: inherit; color: var(--text-primary); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; min-width: 240px;
+  }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .summary { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; padding: 0; margin: 0 0 16px; color: var(--text-secondary); font-size: 13px; }
+  .legend li { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+
+  .chart { position: relative; }
+  .row {
+    display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: 12px;
+    height: 24px; border-radius: 4px; cursor: default;
+  }
+  .row:hover, .row:focus-visible { background: var(--row-hover); outline: none; }
+  .trait { font-size: 13px; text-align: right; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track { display: flex; align-items: center; gap: 8px; height: 100%; border-left: 1px solid var(--axis); }
+  .bar { display: flex; gap: 2px; height: 16px; flex: none; }
+  .seg { height: 100%; }
+  .seg:last-child { border-radius: 0 4px 4px 0; }
+  .value { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+  .tooltip {
+    position: absolute; pointer-events: none; z-index: 2; min-width: 170px;
+    background: var(--surface); color: var(--text-primary); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; font-size: 13px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+  .tooltip[hidden] { display: none; }
+  .tooltip strong { display: block; margin-bottom: 4px; }
+  .tooltip .line { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+  .tooltip .line span:last-child { margin-left: auto; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+  details { margin-top: 20px; }
+  summary { cursor: pointer; color: var(--text-secondary); }
+  .table-wrap { overflow-x: auto; margin-top: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 4px 8px; border-bottom: 1px solid var(--grid); text-align: right; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 600; }
+
+  footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
+  footer a { color: inherit; }
+
+  @media (max-width: 480px) {
+    .row { grid-template-columns: 92px 1fr; gap: 8px; }
+    select { min-width: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Grizzled trait picker</h1>
+  <p class="lede">How often each trait appears on encounter cards you test on or against, weighted by copies. Pick the two traits for Grizzled that show up most.</p>
+
+  <div class="controls">
+    <label for="campaign">Campaign</label>
+    <select id="campaign"></select>
+  </div>
+
+  <section class="card" aria-labelledby="chart-title">
+    <h2 id="chart-title" class="summary"></h2>
+    <ul class="legend" id="legend"></ul>
+    <div class="chart" id="chart" role="list"></div>
+    <div class="tooltip" id="tooltip" hidden></div>
+
+    <details>
+      <summary>Show as table</summary>
+      <div class="table-wrap"><table id="table"></table></div>
+    </details>
+  </section>
+
+  <footer>
+    Card data from <a href="https://arkhamdb.com">ArkhamDB</a>. Arkham Horror: The Card Game is © Fantasy Flight Games.
+    Source: <a href="https://github.com/nekhebit/arkham-traits">github.com/nekhebit/arkham-traits</a> (AGPL-3.0).
+  </footer>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

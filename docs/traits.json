@@ -1,0 +1,398 @@
+{
+ "source": "ArkhamDB",
+ "types": [
+  "enemy",
+  "treachery",
+  "location",
+  "enemy_location"
+ ],
+ "campaigns": {
+  "fhv": {
+   "name": "The Feast of Hemlock Vale",
+   "cards": 207,
+   "copies": 309,
+   "traits": [
+    {
+     "trait": "Mutated",
+     "total": 51,
+     "byType": {
+      "enemy": 51,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Elite",
+     "total": 47,
+     "byType": {
+      "enemy": 34,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 13
+     }
+    },
+    {
+     "trait": "Hazard",
+     "total": 45,
+     "byType": {
+      "enemy": 0,
+      "treachery": 45,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Monster",
+     "total": 43,
+     "byType": {
+      "enemy": 30,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 13
+     }
+    },
+    {
+     "trait": "Creature",
+     "total": 40,
+     "byType": {
+      "enemy": 40,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Flora",
+     "total": 25,
+     "byType": {
+      "enemy": 18,
+      "treachery": 7,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Room",
+     "total": 25,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 12,
+      "enemy_location": 13
+     }
+    },
+    {
+     "trait": "Blight",
+     "total": 24,
+     "byType": {
+      "enemy": 2,
+      "treachery": 10,
+      "location": 12,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Dark",
+     "total": 24,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 24,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Power",
+     "total": 22,
+     "byType": {
+      "enemy": 0,
+      "treachery": 22,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Hemlock Vale",
+     "total": 20,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 20,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Colour",
+     "total": 17,
+     "byType": {
+      "enemy": 8,
+      "treachery": 9,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Humanoid",
+     "total": 17,
+     "byType": {
+      "enemy": 17,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Cave",
+     "total": 16,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 16,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Rail",
+     "total": 16,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 16,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Forest",
+     "total": 15,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 15,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Abomination",
+     "total": 13,
+     "byType": {
+      "enemy": 13,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Dormant",
+     "total": 12,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 12,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Lair",
+     "total": 11,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 11,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Terror",
+     "total": 11,
+     "byType": {
+      "enemy": 0,
+      "treachery": 11,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Bog",
+     "total": 10,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 10,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Resident",
+     "total": 10,
+     "byType": {
+      "enemy": 10,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Sunken",
+     "total": 10,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 10,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Insect",
+     "total": 9,
+     "byType": {
+      "enemy": 9,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Scheme",
+     "total": 9,
+     "byType": {
+      "enemy": 0,
+      "treachery": 9,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Shattered",
+     "total": 9,
+     "byType": {
+      "enemy": 4,
+      "treachery": 0,
+      "location": 5,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Emissary",
+     "total": 8,
+     "byType": {
+      "enemy": 8,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Coastal",
+     "total": 6,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 6,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Farm",
+     "total": 5,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 5,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Field",
+     "total": 5,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 5,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Central",
+     "total": 4,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 4,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Blunder",
+     "total": 2,
+     "byType": {
+      "enemy": 0,
+      "treachery": 2,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Curse",
+     "total": 2,
+     "byType": {
+      "enemy": 0,
+      "treachery": 2,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Extradimensional",
+     "total": 1,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 1,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Miskatonic",
+     "total": 1,
+     "byType": {
+      "enemy": 1,
+      "treachery": 0,
+      "location": 0,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Ruins",
+     "total": 1,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 1,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Sanctum",
+     "total": 1,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 1,
+      "enemy_location": 0
+     }
+    },
+    {
+     "trait": "Station",
+     "total": 1,
+     "byType": {
+      "enemy": 0,
+      "treachery": 0,
+      "location": 1,
+      "enemy_location": 0
+     }
+    }
+   ]
+  }
+ }
+}
