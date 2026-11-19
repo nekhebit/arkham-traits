@@ -5,5 +5,8 @@
   "type": "module",
   "license": "AGPL-3.0-or-later",
   "private": true,
-  "scripts": {}
+  "scripts": {
+    "fetch": "node scripts/fetch.js",
+    "report": "node scripts/report.js"
+  }
 }

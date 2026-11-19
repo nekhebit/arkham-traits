@@ -11,6 +11,11 @@ by counting trait frequency on encounter cards per campaign.
 - Weight: `quantity` (copies per card)
 - `campaigns.json`: hand-written mapping of campaign -> packs (-> scenarios later)
 
+## Content rules (copyright)
+- Commit only derived data (trait names and counts), never the ArkhamDB dump
+- No card text, flavor text or images in the repo or the web page
+- Keep the tool non-commercial; credit ArkhamDB and Fantasy Flight Games
+
 ## Conventions
 - Node.js, ES modules, no build step
 - Commit messages: imperative subject, no co-author trailer
