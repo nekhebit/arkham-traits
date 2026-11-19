@@ -80,6 +80,16 @@
     border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; min-width: 240px;
   }
 
+  .mode-label { color: var(--text-secondary); }
+  .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); }
+  .segmented button {
+    font: inherit; font-size: 14px; color: var(--text-secondary); background: transparent;
+    border: 0; padding: 6px 12px; cursor: pointer;
+  }
+  .segmented button + button { border-left: 1px solid var(--border); }
+  .segmented button[aria-pressed="true"] { background: var(--row-hover); color: var(--text-primary); font-weight: 600; }
+  .segmented button:focus-visible { outline: 2px solid var(--series-1); outline-offset: -2px; }
+  [hidden] { display: none !important; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
   .card + .card { margin-top: 24px; }
   .summary { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
@@ -144,9 +154,17 @@
     <label for="scenario">Scenario</label>
     <select id="scenario"></select>
   </div>
+  <div class="controls" id="mode-row">
+    <span class="mode-label" id="mode-label">Count</span>
+    <div class="segmented" id="mode" role="group" aria-labelledby="mode-label">
+      <button type="button" data-mode="expected">Expected per playthrough</button>
+      <button type="button" data-mode="once">Each set once</button>
+    </div>
+  </div>
 
   <section class="card" aria-labelledby="chart-title">
     <h2 id="chart-title" class="summary"></h2>
+    <p class="note" id="mode-note"></p>
     <p class="note"><strong>Two-sided cards count as half a copy per side.</strong> Some encounter cards flip into another card, for example a room that becomes an enemy. You only test against the side in play, so each side counts as ½. Some cards only appear in certain story branches, so counts in your game may be lower.</p>
     <ul class="legend" id="legend"></ul>
     <div class="chart" id="chart" role="list"></div>

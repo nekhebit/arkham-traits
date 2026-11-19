@@ -1,11 +1,14 @@
 // Prints trait counts for a campaign.
-// Usage: npm run report -- <campaign-id> [--scenario id] [--top N] [--pairs [--with Trait]] [--sets]
+// Usage: npm run report -- <campaign-id> [--scenario id | --once] [--top N] [--pairs [--with Trait]] [--sets]
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { COUNTED_TYPES, countOverlaps, countTraits, scopeOf } from '../src/count.js';
 import { rankPairs } from '../docs/pairs.js';
 
-const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+const fmt = (n) => {
+  const r = Math.round(n * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+};
 const ROOT = join(import.meta.dirname, '..');
 const readJson = async (path) => JSON.parse(await readFile(join(ROOT, path), 'utf8'));
 
@@ -17,7 +20,7 @@ const [id] = args.filter((a) => !a.startsWith('--') && !optionValues.has(a));
 const top = Number(option('--top') ?? 20);
 
 if (!id || !campaigns[id]) {
-  console.log('Usage: npm run report -- <campaign-id> [--scenario id] [--top N] [--pairs [--with Trait]] [--sets]\nCampaigns:');
+  console.log('Usage: npm run report -- <campaign-id> [--scenario id | --once] [--top N] [--pairs [--with Trait]] [--sets]\nCampaigns:');
   for (const [key, c] of Object.entries(campaigns)) console.log(`  ${key}  ${c.name}`);
   process.exit(id ? 1 : 0);
 }
@@ -36,13 +39,18 @@ if (scenarioId && !campaign.scenarios?.[scenarioId]) {
   console.error(`Unknown scenario "${scenarioId}". Scenarios: ${Object.keys(campaign.scenarios ?? {}).join(', ')}`);
   process.exit(1);
 }
-const scope = scopeOf(campaign, scenarioId);
-const title = scenarioId ? `${campaign.scenarios[scenarioId].name} (${campaign.name})` : campaign.name;
+const scope = scopeOf(campaign, scenarioId, args.includes('--once') ? 'once' : 'expected');
+const title = scenarioId
+  ? `${campaign.scenarios[scenarioId].name} (${campaign.name})`
+  : `${campaign.name}, ${scope.parts ? 'expected per playthrough' : 'each set once'}`;
 const result = countTraits(cards, scope);
 console.log(`${title}: ${fmt(result.copies)} encounter copies\n`);
 
 if (args.includes('--sets')) {
-  const sets = scope.sets ?? [...new Set(cards.filter((c) => scope.packs.includes(c.pack_code)).map((c) => c.encounter_code).filter(Boolean))];
+  const sets =
+    scope.sets ??
+    (scope.parts ? [...new Set(scope.parts.flatMap((p) => p.sets))] : null) ??
+    [...new Set(cards.filter((c) => scope.packs.includes(c.pack_code)).map((c) => c.encounter_code).filter(Boolean))];
   const rows = sets.map((set) => [set, countTraits(cards, { sets: [set] }).copies]).sort((a, b) => b[1] - a[1]);
   console.log(['Encounter set'.padEnd(28), 'Copies'].join('  '));
   for (const [set, copies] of rows) console.log([set.padEnd(28), fmt(copies).padStart(6)].join('  '));

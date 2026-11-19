@@ -28,13 +28,28 @@ const PAIR_PARTS = [
 
 // ---- Controls ---------------------------------------------------------------
 
-// URL hash: #campaign or #campaign/scenario
+// URL hash: #campaign, #campaign/once (each set once) or #campaign/scenario
 const select = $('campaign');
 const scenarioSelect = $('scenario');
+const modeButtons = [...document.querySelectorAll('#mode button')];
+let mode = 'expected';
+
+const MODE_NOTES = {
+  expected: [
+    'Expected per playthrough.',
+    "You don't play every scenario in one campaign. Each encounter set counts once per scenario that uses it, multiplied by the chance that you play that scenario. This assumes every valid path is equally likely. Your own path will differ.",
+  ],
+  once: [
+    'Each set once.',
+    'Every encounter set counts once, no matter how many scenarios use it. This shows which cards exist in the campaign, not how often you meet them.',
+  ],
+};
+
 for (const [id, c] of Object.entries(data.campaigns)) select.append(el('option', { value: id, textContent: c.name }));
-const [hashCampaign, hashScenario] = decodeURIComponent(location.hash.slice(1)).split('/');
+const [hashCampaign, hashRest] = decodeURIComponent(location.hash.slice(1)).split('/');
 if (data.campaigns[hashCampaign]) select.value = hashCampaign;
-fillScenarioSelect(hashScenario);
+if (hashRest === 'once') mode = 'once';
+fillScenarioSelect(hashRest);
 
 function fillScenarioSelect(keep = '') {
   const scenarios = data.campaigns[select.value].scenarios ?? {};
@@ -47,18 +62,29 @@ function fillScenarioSelect(keep = '') {
 }
 
 function updateHash() {
-  const hash = scenarioSelect.value ? `${select.value}/${scenarioSelect.value}` : select.value;
+  let hash = select.value;
+  if (scenarioSelect.value) hash += `/${scenarioSelect.value}`;
+  else if (mode === 'once') hash += '/once';
   history.replaceState(null, '', `#${hash}`);
+}
+
+// The mode only matters for a whole campaign that has scenarios.
+function updateModeControls() {
+  const campaign = data.campaigns[select.value];
+  const show = !scenarioSelect.value && Object.keys(campaign.scenarios ?? {}).length > 0;
+  $('mode-row').hidden = !show;
+  $('mode-note').hidden = !show;
+  const [lead, text] = MODE_NOTES[mode];
+  $('mode-note').replaceChildren(el('strong', { textContent: lead }), ` ${text}`);
+  for (const b of modeButtons) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
 }
 
 // The selected campaign or scenario: { copies, traits, overlaps }.
 function currentView() {
   const campaign = data.campaigns[select.value];
   const scenario = campaign.scenarios?.[scenarioSelect.value];
-  return {
-    view: scenario ?? campaign,
-    title: scenario ? `${scenario.name} (${campaign.name})` : campaign.name,
-  };
+  if (scenario) return { view: scenario, title: `${scenario.name} (${campaign.name})` };
+  return { view: campaign[mode], title: campaign.name };
 }
 
 select.addEventListener('change', () => {
@@ -70,6 +96,13 @@ scenarioSelect.addEventListener('change', () => {
   updateHash();
   render();
 });
+for (const b of modeButtons) {
+  b.addEventListener('click', () => {
+    mode = b.dataset.mode;
+    updateHash();
+    render();
+  });
+}
 $('fixed').addEventListener('change', () => renderPairs(currentView().view));
 
 // Legends: fixed order, same colors for every campaign.
@@ -80,7 +113,10 @@ $('pair-legend').append(...PAIR_PARTS.map((p) => legendItem(p.color, p.label)));
 // ---- Shared pieces ----------------------------------------------------------
 
 // Two-sided cards count half per side, so counts can end in .5.
-const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+const fmt = (n) => {
+  const r = Math.round(n * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+};
 const pct = (n, campaign) => `${((n / campaign.copies) * 100).toFixed(1)}%`;
 
 // parts: [{ value, color }]; ratio: bar length relative to the longest bar.
@@ -219,6 +255,7 @@ function renderPairs(campaign) {
 // ---- Render -----------------------------------------------------------------
 
 function render() {
+  updateModeControls();
   const { view, title } = currentView();
   renderTraits(view, title);
   fillFixedSelect(view);

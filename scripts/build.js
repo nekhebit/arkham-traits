@@ -2,7 +2,7 @@
 // Contains only trait names and counts (see CLAUDE.md content rules).
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { COUNTED_TYPES, countOverlaps, countTraits, scopeOf, unknownSets } from '../src/count.js';
+import { COUNTED_TYPES, campaignProblems, countOverlaps, countTraits, scopeOf } from '../src/count.js';
 
 const ROOT = join(import.meta.dirname, '..');
 const readJson = async (path) => JSON.parse(await readFile(join(ROOT, path), 'utf8'));
@@ -16,10 +16,10 @@ try {
   process.exit(1);
 }
 
-// Typos in campaigns.json would silently count nothing, so stop here.
-const unknown = unknownSets(cards, campaigns);
-if (unknown.length) {
-  for (const u of unknown) console.error(`Unknown encounter set "${u.set}" in ${u.campaign}/${u.scenario}`);
+// Typos or bad weights in campaigns.json would silently miscount, so stop here.
+const problems = campaignProblems(cards, campaigns);
+if (problems.length) {
+  for (const p of problems) console.error(`campaigns.json ${p.campaign}/${p.scenario}: ${p.problem}`);
   process.exit(1);
 }
 
@@ -51,8 +51,14 @@ for (const [id, campaign] of Object.entries(campaigns)) {
     scenarios[sid] = { name: s.name, ...counts(scopeOf(campaign, sid)) };
     views++;
   }
-  out.campaigns[id] = { name: campaign.name, ...counts(scopeOf(campaign)), scenarios };
-  views++;
+  // Whole campaign in both modes; the page toggles between them.
+  out.campaigns[id] = {
+    name: campaign.name,
+    expected: counts(scopeOf(campaign, null, 'expected')),
+    once: counts(scopeOf(campaign, null, 'once')),
+    scenarios,
+  };
+  views += 2;
 }
 
 const text = JSON.stringify(out) + '\n';

@@ -12,43 +12,70 @@ export function splitTraits(traits) {
     .filter(Boolean);
 }
 
-// What to count: { sets: [encounter_code] } or { packs: [pack_code] }.
-// A scenario is its sets. A campaign with scenarios is the union of their
-// sets (this includes reused sets from other packs, like the Core Set);
-// without scenarios it falls back to its packs.
-export function scopeOf(campaign, scenarioId = null) {
-  if (scenarioId) return { sets: campaign.scenarios[scenarioId].sets };
-  const scenarios = Object.values(campaign.scenarios ?? {});
-  if (scenarios.length) return { sets: [...new Set(scenarios.flatMap((s) => s.sets))] };
-  return { packs: campaign.packs };
+// Scenario weight: a number or a fraction string like "5/7" (the chance
+// that a playthrough includes the scenario). Missing means 1.
+export function parseWeight(w) {
+  if (w === undefined) return 1;
+  if (typeof w === 'number') return w;
+  const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(String(w));
+  return m ? Number(m[1]) / Number(m[2]) : NaN;
 }
 
-// Set codes in campaigns.json that no card uses (typos).
-// Returns [{ campaign, scenario, set }].
-export function unknownSets(cards, campaigns) {
+// What to count:
+//   { sets: [encounter_code] }              each set once
+//   { parts: [{ sets, weight }] }           each set once per part, times its weight
+//   { packs: [pack_code] }                  fallback without scenarios
+// A scenario is its sets. A campaign with scenarios is built from them, which
+// includes reused sets from other packs (like the Core Set):
+//   mode "once":     the union of all scenario sets
+//   mode "expected": each scenario's sets, weighted by its chance to be played
+export function scopeOf(campaign, scenarioId = null, mode = 'expected') {
+  if (scenarioId) return { sets: campaign.scenarios[scenarioId].sets };
+  const scenarios = Object.values(campaign.scenarios ?? {});
+  if (!scenarios.length) return { packs: campaign.packs };
+  if (mode === 'once') return { sets: [...new Set(scenarios.flatMap((s) => s.sets))] };
+  return { parts: scenarios.map((s) => ({ sets: s.sets, weight: parseWeight(s.weight) })) };
+}
+
+// Problems in campaigns.json that would silently miscount.
+// Returns [{ campaign, scenario, problem }].
+export function campaignProblems(cards, campaigns) {
   const known = new Set(cards.map((c) => c.encounter_code).filter(Boolean));
   return Object.entries(campaigns).flatMap(([campaign, c]) =>
-    Object.entries(c.scenarios ?? {}).flatMap(([scenario, s]) =>
-      s.sets.filter((set) => !known.has(set)).map((set) => ({ campaign, scenario, set })),
-    ),
+    Object.entries(c.scenarios ?? {}).flatMap(([scenario, s]) => {
+      const problems = s.sets.filter((set) => !known.has(set)).map((set) => `unknown encounter set "${set}"`);
+      const w = parseWeight(s.weight);
+      if (!(w >= 0 && w <= 1)) problems.push(`weight ${JSON.stringify(s.weight)} is not between 0 and 1`);
+      if (scenario === 'once') problems.push('"once" is reserved for the page URL');
+      return problems.map((problem) => ({ campaign, scenario, problem }));
+    }),
   );
 }
 
 // Encounter cards of the counted types in the scope, each with a
-// `weight` in copies. A two-sided card (front with `linked_to_code`, back is
+// `weight` in copies (times the scope's multiplier for its set). A two-sided card (front with `linked_to_code`, back is
 // the linked card) counts as half a copy per side: you only test against the
 // side in play, and we don't know which one that is. A side of a type we
 // don't count (an asset or act front, say) still takes its half.
 export function campaignCards(cards, scope) {
-  const sets = scope.sets ? new Set(scope.sets) : null;
+  // Multiplier per encounter set; null means "select by pack, multiplier 1".
+  let perSet = null;
+  if (scope.parts) {
+    perSet = new Map();
+    for (const part of scope.parts) {
+      for (const set of part.sets) perSet.set(set, (perSet.get(set) ?? 0) + part.weight);
+    }
+  } else if (scope.sets) {
+    perSet = new Map(scope.sets.map((set) => [set, 1]));
+  }
   const packs = new Set(scope.packs ?? []);
-  const inScope = (c) => (sets ? sets.has(c.encounter_code) : packs.has(c.pack_code));
+  const multiplier = (c) => (perSet ? (perSet.get(c.encounter_code) ?? 0) : packs.has(c.pack_code) ? 1 : 0);
   const backs = new Set(cards.map((c) => c.linked_to_code).filter(Boolean));
   return cards
-    .filter((c) => inScope(c) && c.encounter_code && COUNTED_TYPES.includes(c.type_code))
+    .filter((c) => c.encounter_code && COUNTED_TYPES.includes(c.type_code) && multiplier(c) > 0)
     .map((c) => {
       const twoSided = Boolean(c.linked_to_code) || backs.has(c.code);
-      return { ...c, weight: (c.quantity ?? 1) * (twoSided ? 0.5 : 1) };
+      return { ...c, weight: (c.quantity ?? 1) * (twoSided ? 0.5 : 1) * multiplier(c) };
     });
 }
 

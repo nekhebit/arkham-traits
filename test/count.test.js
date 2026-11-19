@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { countOverlaps, countTraits, scopeOf, splitTraits, unknownSets } from '../src/count.js';
+import { campaignProblems, countOverlaps, countTraits, parseWeight, scopeOf, splitTraits } from '../src/count.js';
 import { rankPairs } from '../docs/pairs.js';
 
 const campaign = { name: 'Test', packs: ['p1'] };
@@ -102,14 +102,27 @@ const withScenarios = {
   name: 'With scenarios',
   packs: ['p1'],
   scenarios: {
-    one: { name: 'One', sets: ['rock', 'ghouls'] },
-    two: { name: 'Two', sets: ['forest', 'rock'] },
+    one: { name: 'One', weight: '1/2', sets: ['rock', 'ghouls'] },
+    two: { name: 'Two', sets: ['forest', 'rock'] }, // weight defaults to 1
   },
 };
 
-test('scopeOf: scenario sets, campaign union, packs fallback', () => {
+test('parseWeight reads numbers and fractions', () => {
+  assert.equal(parseWeight(undefined), 1);
+  assert.equal(parseWeight(0.25), 0.25);
+  assert.equal(parseWeight('5/7'), 5 / 7);
+  assert.ok(Number.isNaN(parseWeight('half')));
+});
+
+test('scopeOf: scenario sets, campaign modes, packs fallback', () => {
   assert.deepEqual(scopeOf(withScenarios, 'one'), { sets: ['rock', 'ghouls'] });
-  assert.deepEqual(scopeOf(withScenarios), { sets: ['rock', 'ghouls', 'forest'] });
+  assert.deepEqual(scopeOf(withScenarios, null, 'once'), { sets: ['rock', 'ghouls', 'forest'] });
+  assert.deepEqual(scopeOf(withScenarios), {
+    parts: [
+      { sets: ['rock', 'ghouls'], weight: 0.5 },
+      { sets: ['forest', 'rock'], weight: 1 },
+    ],
+  });
   assert.deepEqual(scopeOf(campaign), { packs: ['p1'] });
 });
 
@@ -118,11 +131,32 @@ test('scenario counts include sets from other packs', () => {
   assert.equal(one.copies, 5); // 3 ghouls (core pack) + 2 rock
   assert.equal(byName(one.traits).Ghoul.total, 3);
   assert.equal(byName(one.traits).Creature, undefined);
-  assert.equal(countTraits(scenarioCards, scopeOf(withScenarios)).copies, 6);
+  assert.equal(countTraits(scenarioCards, scopeOf(withScenarios, null, 'once')).copies, 6);
 });
 
-test('unknownSets reports set codes no card uses', () => {
-  const typo = { x: { name: 'X', scenarios: { s: { name: 'S', sets: ['rock', 'rokc'] } } } };
-  assert.deepEqual(unknownSets(scenarioCards, typo), [{ campaign: 'x', scenario: 's', set: 'rokc' }]);
-  assert.deepEqual(unknownSets(scenarioCards, { withScenarios }), []);
+test('expected mode counts a set once per scenario, times its weight', () => {
+  const r = countTraits(scenarioCards, scopeOf(withScenarios));
+  const t = byName(r.traits);
+  assert.equal(t.Hazard.total, 3); // rock: 2 copies x (0.5 + 1)
+  assert.equal(t.Ghoul.total, 1.5); // ghouls: 3 x 0.5
+  assert.equal(t.Creature.total, 1); // forest: 1 x 1
+  assert.equal(r.copies, 5.5);
+});
+
+test('campaignProblems reports unknown sets, bad weights and reserved ids', () => {
+  const bad = {
+    x: {
+      name: 'X',
+      scenarios: {
+        s: { name: 'S', sets: ['rock', 'rokc'] },
+        t: { name: 'T', weight: '3/2', sets: ['rock'] },
+        once: { name: 'Once', sets: ['rock'] },
+      },
+    },
+  };
+  assert.deepEqual(
+    campaignProblems(scenarioCards, bad).map((p) => `${p.scenario}: ${p.problem}`),
+    ['s: unknown encounter set "rokc"', 't: weight "3/2" is not between 0 and 1', 'once: "once" is reserved for the page URL'],
+  );
+  assert.deepEqual(campaignProblems(scenarioCards, { withScenarios }), []);
 });
