@@ -9,7 +9,9 @@ by counting trait frequency on encounter cards per campaign.
 - Counted types: enemy, treachery, location, enemy_location
 - Weight: `quantity` (copies per card)
 - Two-sided cards (front has `linked_to_code`, back is the hidden linked card) count ½ × quantity per side, even when one side is an uncounted type (asset, act). The page shows this as a disclaimer
-- `campaigns.json`: hand-written mapping of campaign -> packs (-> scenarios later)
+- `campaigns.json`: campaign -> scenarios -> encounter sets (`encounter_code`). Scenario lists are based on ArkhamCards (zzorba/arkham-cards-data, no license): copy only set lists, never their files or text, and ask the user before adding another campaign
+- A campaign with scenarios counts the union of their sets (includes reused Core Set sets); `packs` is only the fallback for campaigns without scenarios
+- `npm run build` fails on unknown set codes
 
 ## Content rules (copyright)
 - Commit only derived data (trait names and counts), never the ArkhamDB dump

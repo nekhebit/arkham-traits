@@ -28,15 +28,49 @@ const PAIR_PARTS = [
 
 // ---- Controls ---------------------------------------------------------------
 
+// URL hash: #campaign or #campaign/scenario
 const select = $('campaign');
+const scenarioSelect = $('scenario');
 for (const [id, c] of Object.entries(data.campaigns)) select.append(el('option', { value: id, textContent: c.name }));
-const fromHash = location.hash.slice(1);
-if (data.campaigns[fromHash]) select.value = fromHash;
+const [hashCampaign, hashScenario] = decodeURIComponent(location.hash.slice(1)).split('/');
+if (data.campaigns[hashCampaign]) select.value = hashCampaign;
+fillScenarioSelect(hashScenario);
+
+function fillScenarioSelect(keep = '') {
+  const scenarios = data.campaigns[select.value].scenarios ?? {};
+  scenarioSelect.replaceChildren(
+    el('option', { value: '', textContent: 'Whole campaign' }),
+    ...Object.entries(scenarios).map(([id, s]) => el('option', { value: id, textContent: s.name })),
+  );
+  scenarioSelect.value = scenarios[keep] ? keep : '';
+  scenarioSelect.disabled = Object.keys(scenarios).length === 0;
+}
+
+function updateHash() {
+  const hash = scenarioSelect.value ? `${select.value}/${scenarioSelect.value}` : select.value;
+  history.replaceState(null, '', `#${hash}`);
+}
+
+// The selected campaign or scenario: { copies, traits, overlaps }.
+function currentView() {
+  const campaign = data.campaigns[select.value];
+  const scenario = campaign.scenarios?.[scenarioSelect.value];
+  return {
+    view: scenario ?? campaign,
+    title: scenario ? `${scenario.name} (${campaign.name})` : campaign.name,
+  };
+}
+
 select.addEventListener('change', () => {
-  history.replaceState(null, '', `#${select.value}`);
+  fillScenarioSelect();
+  updateHash();
   render();
 });
-$('fixed').addEventListener('change', () => renderPairs(data.campaigns[select.value]));
+scenarioSelect.addEventListener('change', () => {
+  updateHash();
+  render();
+});
+$('fixed').addEventListener('change', () => renderPairs(currentView().view));
 
 // Legends: fixed order, same colors for every campaign.
 const legendItem = (color, label) => el('li', {}, [el('span', { className: 'swatch', style: `background:${color}` }), label]);
@@ -103,9 +137,9 @@ function table(target, headers, rows) {
 
 // ---- Trait chart ------------------------------------------------------------
 
-function renderTraits(campaign) {
+function renderTraits(campaign, title) {
   const max = Math.max(...campaign.traits.map((t) => t.total));
-  $('chart-title').textContent = `${campaign.name}: ${fmt(campaign.copies)} encounter copies`;
+  $('chart-title').textContent = `${title}: ${fmt(campaign.copies)} encounter copies`;
 
   $('chart').replaceChildren(
     ...campaign.traits.map((t) => {
@@ -185,10 +219,10 @@ function renderPairs(campaign) {
 // ---- Render -----------------------------------------------------------------
 
 function render() {
-  const campaign = data.campaigns[select.value];
-  renderTraits(campaign);
-  fillFixedSelect(campaign);
-  renderPairs(campaign);
+  const { view, title } = currentView();
+  renderTraits(view, title);
+  fillFixedSelect(view);
+  renderPairs(view);
 }
 
 render();

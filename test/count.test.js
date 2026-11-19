@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { countOverlaps, countTraits, splitTraits } from '../src/count.js';
+import { countOverlaps, countTraits, scopeOf, splitTraits, unknownSets } from '../src/count.js';
 import { rankPairs } from '../docs/pairs.js';
 
 const campaign = { name: 'Test', packs: ['p1'] };
@@ -90,4 +90,39 @@ test('rankPairs with a fixed trait lists it first', () => {
       ['Room', 3],
     ],
   );
+});
+
+// Scenarios select by encounter set, across packs.
+const scenarioCards = [
+  card('enemy', 'Ghoul. Monster.', 3, { pack_code: 'core', encounter_code: 'ghouls' }),
+  card('treachery', 'Hazard.', 2, { encounter_code: 'rock' }),
+  card('enemy', 'Creature.', 1, { encounter_code: 'forest' }),
+];
+const withScenarios = {
+  name: 'With scenarios',
+  packs: ['p1'],
+  scenarios: {
+    one: { name: 'One', sets: ['rock', 'ghouls'] },
+    two: { name: 'Two', sets: ['forest', 'rock'] },
+  },
+};
+
+test('scopeOf: scenario sets, campaign union, packs fallback', () => {
+  assert.deepEqual(scopeOf(withScenarios, 'one'), { sets: ['rock', 'ghouls'] });
+  assert.deepEqual(scopeOf(withScenarios), { sets: ['rock', 'ghouls', 'forest'] });
+  assert.deepEqual(scopeOf(campaign), { packs: ['p1'] });
+});
+
+test('scenario counts include sets from other packs', () => {
+  const one = countTraits(scenarioCards, scopeOf(withScenarios, 'one'));
+  assert.equal(one.copies, 5); // 3 ghouls (core pack) + 2 rock
+  assert.equal(byName(one.traits).Ghoul.total, 3);
+  assert.equal(byName(one.traits).Creature, undefined);
+  assert.equal(countTraits(scenarioCards, scopeOf(withScenarios)).copies, 6);
+});
+
+test('unknownSets reports set codes no card uses', () => {
+  const typo = { x: { name: 'X', scenarios: { s: { name: 'S', sets: ['rock', 'rokc'] } } } };
+  assert.deepEqual(unknownSets(scenarioCards, typo), [{ campaign: 'x', scenario: 's', set: 'rokc' }]);
+  assert.deepEqual(unknownSets(scenarioCards, { withScenarios }), []);
 });

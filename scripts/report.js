@@ -1,8 +1,8 @@
 // Prints trait counts for a campaign.
-// Usage: npm run report -- <campaign-id> [--top N] [--pairs [--with Trait]]
+// Usage: npm run report -- <campaign-id> [--scenario id] [--top N] [--pairs [--with Trait]] [--sets]
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { COUNTED_TYPES, countOverlaps, countTraits } from '../src/count.js';
+import { COUNTED_TYPES, countOverlaps, countTraits, scopeOf } from '../src/count.js';
 import { rankPairs } from '../docs/pairs.js';
 
 const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
@@ -12,12 +12,12 @@ const readJson = async (path) => JSON.parse(await readFile(join(ROOT, path), 'ut
 const campaigns = await readJson('campaigns.json');
 const args = process.argv.slice(2);
 const option = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const optionValues = new Set(['--top', '--with'].map(option));
+const optionValues = new Set(['--top', '--with', '--scenario'].map(option));
 const [id] = args.filter((a) => !a.startsWith('--') && !optionValues.has(a));
 const top = Number(option('--top') ?? 20);
 
 if (!id || !campaigns[id]) {
-  console.log('Usage: npm run report -- <campaign-id> [--top N] [--pairs [--with Trait]]\nCampaigns:');
+  console.log('Usage: npm run report -- <campaign-id> [--scenario id] [--top N] [--pairs [--with Trait]] [--sets]\nCampaigns:');
   for (const [key, c] of Object.entries(campaigns)) console.log(`  ${key}  ${c.name}`);
   process.exit(id ? 1 : 0);
 }
@@ -30,8 +30,24 @@ try {
   process.exit(1);
 }
 
-const result = countTraits(cards, campaigns[id]);
-console.log(`${campaigns[id].name}: ${result.cards} cards, ${fmt(result.copies)} copies\n`);
+const campaign = campaigns[id];
+const scenarioId = option('--scenario') ?? null;
+if (scenarioId && !campaign.scenarios?.[scenarioId]) {
+  console.error(`Unknown scenario "${scenarioId}". Scenarios: ${Object.keys(campaign.scenarios ?? {}).join(', ')}`);
+  process.exit(1);
+}
+const scope = scopeOf(campaign, scenarioId);
+const title = scenarioId ? `${campaign.scenarios[scenarioId].name} (${campaign.name})` : campaign.name;
+const result = countTraits(cards, scope);
+console.log(`${title}: ${fmt(result.copies)} encounter copies\n`);
+
+if (args.includes('--sets')) {
+  const sets = scope.sets ?? [...new Set(cards.filter((c) => scope.packs.includes(c.pack_code)).map((c) => c.encounter_code).filter(Boolean))];
+  const rows = sets.map((set) => [set, countTraits(cards, { sets: [set] }).copies]).sort((a, b) => b[1] - a[1]);
+  console.log(['Encounter set'.padEnd(28), 'Copies'].join('  '));
+  for (const [set, copies] of rows) console.log([set.padEnd(28), fmt(copies).padStart(6)].join('  '));
+  process.exit(0);
+}
 
 if (args.includes('--pairs')) {
   const fixed = option('--with') ?? null;
@@ -39,7 +55,7 @@ if (args.includes('--pairs')) {
     console.error(`Unknown trait "${fixed}" for this campaign.`);
     process.exit(1);
   }
-  const pairs = rankPairs(result.traits, countOverlaps(cards, campaigns[id]), { fixed, limit: top });
+  const pairs = rankPairs(result.traits, countOverlaps(cards, scope), { fixed, limit: top });
   console.log(['Pair'.padEnd(28), 'Cover', 'Share', '  Both'].join('  '));
   for (const p of pairs) {
     const share = `${((p.coverage / result.copies) * 100).toFixed(1)}%`;

@@ -2,6 +2,55 @@
   "fhv": {
     "name": "The Feast of Hemlock Vale",
     "packs": ["fhvc"],
-    "scenarios": {}
+    "scenarios": {
+      "prologue": {
+        "name": "Welcome to Hemlock Vale (prologue)",
+        "sets": ["the_first_day", "day_of_rest", "residents", "the_vale"]
+      },
+      "written_in_rock": {
+        "name": "Written in Rock",
+        "sets": ["written_in_rock", "horrors_in_the_rock", "refractions", "chilling_cold", "ghouls", "residents"]
+      },
+      "hemlock_house": {
+        "name": "Hemlock House",
+        "sets": ["hemlock_house", "agents_of_the_colour", "blight", "fire", "transfiguration", "locked_doors", "rats", "residents"]
+      },
+      "the_silent_heath": {
+        "name": "The Silent Heath",
+        "sets": ["the_silent_heath", "agents_of_the_colour", "blight", "horrors_in_the_rock", "refractions", "transfiguration", "striking_fear", "residents"]
+      },
+      "the_lost_sister": {
+        "name": "The Lost Sister",
+        "sets": ["the_lost_sister", "blight", "horrors_in_the_rock", "mutations", "myconids", "residents"]
+      },
+      "the_thing_in_the_depths": {
+        "name": "The Thing in the Depths",
+        "sets": ["the_thing_in_the_depths", "blight", "the_forest", "mutations", "residents"]
+      },
+      "the_twisted_hollow": {
+        "name": "The Twisted Hollow",
+        "sets": ["the_first_day", "the_twisted_hollow", "the_forest", "myconids", "residents"]
+      },
+      "dawn_of_the_second_day": {
+        "name": "Dawn of the Second Day",
+        "sets": ["the_second_day", "day_of_rain", "residents", "the_vale"]
+      },
+      "the_longest_night": {
+        "name": "The Longest Night",
+        "sets": ["the_second_day", "the_longest_night", "blight", "transfiguration", "fire", "chilling_cold", "arkham", "striking_fear", "residents"]
+      },
+      "dawn_of_the_final_day": {
+        "name": "Dawn of the Final Day",
+        "sets": ["the_final_day", "day_of_the_feast", "agents_of_the_colour", "residents", "the_vale"]
+      },
+      "the_final_evening": {
+        "name": "The Final Evening",
+        "sets": ["the_final_day", "day_of_the_feast", "residents", "the_vale"]
+      },
+      "fate_of_the_vale": {
+        "name": "Fate of the Vale",
+        "sets": ["the_final_day", "fate_of_the_vale", "day_of_the_feast", "agents_of_the_colour", "fire", "horrors_in_the_rock", "refractions", "residents", "transfiguration", "the_vale"]
+      }
+    }
   }
 }
