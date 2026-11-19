@@ -207,3 +207,24 @@ test('bestSets and upgradePath maximise coverage', async () => {
     ],
   );
 });
+
+test('spreadScorers: per-scenario shares, weighted average and worst case', async () => {
+  const { spreadScorers } = await import('../src/sets.js');
+  const a = [card('enemy', 'Dark.', 1), card('enemy', 'Monster.', 1)]; // Dark 50%
+  const b = [card('enemy', 'Monster.', 2)]; // Dark 0%
+  const { shares, avg, worst } = spreadScorers([a, b].map((x) => x.map((c) => ({ ...c, weight: c.quantity }))), [1, 0.5]);
+  assert.deepEqual(shares(['Dark']), [0.5, 0]);
+  assert.equal(avg(['Dark']), (0.5 * 1 + 0 * 0.5) / 1.5);
+  assert.equal(worst(['Dark']), 0);
+  assert.equal(worst(['Monster']), 0.5);
+});
+
+test('pathFrom ends at the best set even when greedy steps would not', async () => {
+  const { pathFrom } = await import('../src/sets.js');
+  // Scores built so the best pair (A+B) is not inside the best triple (A+C+D).
+  const table = { 'A,B': 10, 'A,C': 6, 'A,D': 5, 'B,C': 4, 'B,D': 3, 'C,D': 7, 'A,B,C': 11, 'A,B,D': 11, 'A,C,D': 20, 'B,C,D': 9 };
+  const score = (set) => table[[...set].sort().join()];
+  const path = pathFrom(['A', 'B', 'C', 'D'], score, 3);
+  assert.deepEqual(path.map((p) => p.traits.join('+')), ['C+D', 'C+D+A']);
+  assert.equal(path.at(-1).score, 20);
+});

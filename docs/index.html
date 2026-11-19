@@ -22,6 +22,8 @@
     --series-4: #eda100;
     --pair-both: #256abf;
     --pair-one: #86b6ef;
+    --heat: #256abf;
+    --heat-ink: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -41,6 +43,8 @@
       --series-4: #c98500;
       --pair-both: #6da7ec;
       --pair-one: #1c5cab;
+      --heat: #1c5cab;
+      --heat-ink: #f0efec;
     }
   }
   :root[data-theme="dark"] {
@@ -60,6 +64,8 @@
     --series-4: #c98500;
     --pair-both: #6da7ec;
     --pair-one: #1c5cab;
+    --heat: #1c5cab;
+    --heat-ink: #f0efec;
   }
 
   * { box-sizing: border-box; }
@@ -109,6 +115,12 @@
   }
   .pairs .row { grid-template-columns: 190px 1fr; min-height: 28px; }
   .sets .row { grid-template-columns: 250px 1fr; min-height: 28px; }
+  table.spread { font-size: 12px; }
+  table.spread td, table.spread th { padding: 4px 5px; }
+  table.spread td.heat { text-align: center; min-width: 40px; }
+  table.spread td.heat.strong { color: var(--heat-ink); }
+  table.spread th { white-space: normal; font-size: 11px; line-height: 1.2; vertical-align: bottom; text-align: center; }
+  table.spread th:first-child { text-align: left; }
   .subhead { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 16px 0 6px; }
   .row:hover, .row:focus-visible { background: var(--row-hover); outline: none; }
   .label { font-size: 13px; text-align: right; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -185,6 +197,12 @@
     </details>
   </section>
 
+  <section class="card" id="spread-card" aria-labelledby="spread-title">
+    <h2 id="spread-title" class="summary">Spread across scenarios</h2>
+    <p class="note">Share of each scenario's copies that carry the trait. A trait that is strong in one scenario can be missing in others. Avg is weighted by the chance to play each scenario. Top 10 traits by average.</p>
+    <div class="table-wrap"><table id="spread-table" class="spread"></table></div>
+  </section>
+
   <section class="card" aria-labelledby="pairs-title">
     <h2 id="pairs-title" class="summary"></h2>
     <p class="note">Copies with at least one of the two traits, so Grizzled helps. Cards with both traits give 4 wild icons instead of 2. Two-sided cards count as half a copy per side, as above.</p>
@@ -203,7 +221,16 @@
 
   <section class="card" aria-labelledby="sets-title">
     <h2 id="sets-title" class="summary"></h2>
-    <p class="note">Grizzled can be upgraded to record up to 4 traits. The path starts with the best pair and each step adds the trait that helps on the most extra copies. Searched among the 16 most common traits.</p>
+    <p class="note">Grizzled can be upgraded to record up to 4 traits. The path leads to the best set of 4: it starts with the best pair inside that set and adds one trait per upgrade. Searched among the 16 most common traits.</p>
+    <div class="controls" id="ranking-row">
+      <span class="mode-label" id="ranking-label">Rank by</span>
+      <div class="segmented" id="ranking" role="group" aria-labelledby="ranking-label">
+        <button type="button" data-ranking="total">Total</button>
+        <button type="button" data-ranking="avg">Average per scenario</button>
+        <button type="button" data-ranking="worst">Worst scenario</button>
+      </div>
+    </div>
+    <p class="note" id="ranking-note"></p>
     <h3 class="subhead">Upgrade path</h3>
     <div class="chart sets" id="path" role="list"></div>
     <h3 class="subhead">Best sets of 4</h3>

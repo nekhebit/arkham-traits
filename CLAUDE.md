@@ -16,7 +16,8 @@ by counting trait frequency on encounter cards per campaign.
 - Cards with several versions (same name, same set) count every version; known overcount, mentioned on the page
 - Spoilers: the user avoids campaign story spoilers. Page text stays neutral, no story events or scenario roles
 - Skill-test filter (`hasSkillTest` in src/count.js): enemies with fight/evade, locations with shroud, treacheries whose text has the word "test". Heuristic; reactive treacheries still count. traits.json has a `tested` copy of every view
-- Best sets (src/sets.js): Grizzled can record up to 4 traits. Exhaustive search over the 16 most common traits per view; upgrade path = best pair, then greedily add the trait with most extra coverage. Stored per view as `upgrades`
+- Best sets (src/sets.js): Grizzled can record up to 4 traits. Exhaustive search over the 16 most common traits. The upgrade path works backwards from the best set of 4 (best 3-subset, then best pair), because greedy steps can miss the best final set
+- Spread: per scenario, the share of its copies with the trait/set; `avg` weighted by play chance, `worst` = weakest scenario. Stored per campaign as `spread` (all + tested), with best sets ranked by avg and worst. The page ranks best sets by Total / Average per scenario / Worst scenario
 - `npm run build` fails on unknown set codes, weights outside 0..1 and the reserved scenario ids `once` and `tested`
 
 ## Content rules (copyright)

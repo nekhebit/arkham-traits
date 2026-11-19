@@ -2,8 +2,8 @@
 // Contains only trait names and counts (see CLAUDE.md content rules).
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { COUNTED_TYPES, campaignCards, campaignProblems, countOverlaps, countTraits, scopeOf } from '../src/count.js';
-import { bestSets, upgradePath } from '../src/sets.js';
+import { COUNTED_TYPES, campaignCards, campaignProblems, countOverlaps, countTraits, parseWeight, scopeOf } from '../src/count.js';
+import { bestSets, pathFrom, rankSets, spreadScorers, topTraits, upgradePath } from '../src/sets.js';
 
 const ROOT = join(import.meta.dirname, '..');
 const readJson = async (path) => JSON.parse(await readFile(join(ROOT, path), 'utf8'));
@@ -50,6 +50,30 @@ function countsFor(scope, options) {
 }
 const counts = (scope) => ({ ...countsFor(scope), tested: countsFor(scope, { testedOnly: true }) });
 
+// How evenly traits and sets spread across a campaign's scenarios: each
+// scenario's share of its own copies, the play-chance-weighted average and
+// the worst scenario. Best sets are ranked by average and by worst case.
+const r3 = (n) => Math.round(n * 1000) / 1000;
+function spreadFor(campaign, options) {
+  const ids = Object.keys(campaign.scenarios);
+  const perScenario = ids.map((id) => campaignCards(cards, scopeOf(campaign, id), options));
+  const weights = ids.map((id) => parseWeight(campaign.scenarios[id].weight));
+  const { traits, shares, avg, worst } = spreadScorers(perScenario, weights);
+  const row = (set, score) => ({ traits: set, score: r3(score), shares: shares(set).map(r3) });
+  const pool = topTraits(traits, avg); // worst-case scores are often 0, so pick candidates by average
+  const rank = (score) => ({
+    path: pathFrom(pool, score, 4).map((p) => row(p.traits, p.score)),
+    best4: rankSets(pool, 4, score, 5).map((p) => row(p.traits, p.score)),
+  });
+  return {
+    traits: traits
+      .map((t) => ({ trait: t, shares: shares([t]).map(r3), avg: r3(avg([t])), worst: r3(worst([t])) }))
+      .sort((a, b) => b.avg - a.avg || a.trait.localeCompare(b.trait)),
+    avg: rank(avg),
+    worst: rank(worst),
+  };
+}
+
 const { version } = await readJson('package.json');
 const out = { source: 'ArkhamDB', version, dataDate, types: COUNTED_TYPES, campaigns: {} };
 let views = 0;
@@ -66,6 +90,13 @@ for (const [id, campaign] of Object.entries(campaigns)) {
     once: counts(scopeOf(campaign, null, 'once')),
     scenarios,
   };
+  if (Object.keys(scenarios).length) {
+    out.campaigns[id].spread = {
+      scenarios: Object.entries(campaign.scenarios).map(([sid, sc]) => ({ id: sid, name: sc.name, weight: r3(parseWeight(sc.weight)) })),
+      all: spreadFor(campaign),
+      tested: spreadFor(campaign, { testedOnly: true }),
+    };
+  }
   views += 2;
 }
 
