@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { COUNTED_TYPES, campaignCards, countOverlaps, countTraits, scopeOf } from '../src/count.js';
-import { bestSets, upgradePath } from '../src/sets.js';
+import { bestSets, upgradePath } from '../docs/sets.js';
 import { rankPairs } from '../docs/pairs.js';
 
 const fmt = (n) => {

@@ -2,6 +2,8 @@
 // Grizzled gets [wild][wild] per chosen trait on the encounter card a skill
 // test is made on or against, so we count traits on those card types.
 
+import { expandSlots, remainingChances } from '../docs/structure.js';
+
 export const COUNTED_TYPES = ['enemy', 'treachery', 'location', 'enemy_location'];
 
 // "Creature. Monster. Mutated." -> ["Creature", "Monster", "Mutated"]
@@ -21,6 +23,15 @@ export function parseWeight(w) {
   return m ? Number(m[1]) / Number(m[2]) : NaN;
 }
 
+// Chance per scenario that a playthrough includes it: from the campaign
+// `structure` if there is one (optionally after `played` scenarios), else
+// each scenario's `weight` (default 1). Returns { id: chance } or null if
+// `played` doesn't fit the structure.
+export function scenarioWeights(campaign, played = []) {
+  if (campaign.structure) return remainingChances(campaign.structure, played)?.chances ?? null;
+  return Object.fromEntries(Object.entries(campaign.scenarios ?? {}).map(([id, s]) => [id, parseWeight(s.weight)]));
+}
+
 // What to count:
 //   { sets: [encounter_code] }              each set once
 //   { parts: [{ sets, weight }] }           each set once per part, times its weight
@@ -34,7 +45,8 @@ export function scopeOf(campaign, scenarioId = null, mode = 'expected') {
   const scenarios = Object.values(campaign.scenarios ?? {});
   if (!scenarios.length) return { packs: campaign.packs };
   if (mode === 'once') return { sets: [...new Set(scenarios.flatMap((s) => s.sets))] };
-  return { parts: scenarios.map((s) => ({ sets: s.sets, weight: parseWeight(s.weight) })) };
+  const weights = scenarioWeights(campaign);
+  return { parts: Object.entries(campaign.scenarios).map(([id, s]) => ({ sets: s.sets, weight: weights[id] ?? 0 })) };
 }
 
 // Scenario ids the page uses as URL flags (#campaign/once, #campaign/tested).
@@ -50,7 +62,18 @@ export function campaignProblems(cards, campaigns) {
       const w = parseWeight(s.weight);
       if (!(w >= 0 && w <= 1)) problems.push(`weight ${JSON.stringify(s.weight)} is not between 0 and 1`);
       if (RESERVED_IDS.includes(scenario)) problems.push(`"${scenario}" is reserved for the page URL`);
+      if (c.structure && s.weight !== undefined) problems.push('has a weight, but the campaign structure sets the chances');
       return problems.map((problem) => ({ campaign, scenario, problem }));
+    }),
+  ).concat(
+    Object.entries(campaigns).flatMap(([campaign, c]) => {
+      if (!c.structure) return [];
+      const problems = [];
+      const inSlots = new Set(expandSlots(c.structure).flat());
+      for (const id of inSlots) if (!c.scenarios?.[id]) problems.push(`structure names unknown scenario "${id}"`);
+      for (const id of Object.keys(c.scenarios ?? {})) if (!inSlots.has(id)) problems.push(`scenario "${id}" is in no structure slot`);
+      if (!remainingChances(c.structure)) problems.push('structure allows no complete campaign');
+      return problems.map((problem) => ({ campaign, scenario: 'structure', problem }));
     }),
   );
 }

@@ -98,6 +98,8 @@
   [hidden] { display: none !important; }
   .check { display: inline-flex; align-items: center; gap: 8px; color: var(--text-primary); cursor: pointer; }
   .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--series-1); }
+  .played { align-items: flex-start; }
+  .played-list { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
   .mode-note { margin: -4px 0 16px; max-width: 640px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
   .card + .card { margin-top: 24px; }
@@ -180,6 +182,11 @@
     </div>
   </div>
   <p class="note mode-note" id="mode-note"></p>
+  <div class="controls played" id="played-row">
+    <span class="mode-label">Already played</span>
+    <div class="played-list" id="played-list"></div>
+  </div>
+  <p class="note mode-note" id="played-note" hidden></p>
   <div class="controls">
     <label class="check"><input type="checkbox" id="tested"> Only cards with a skill test</label>
   </div>

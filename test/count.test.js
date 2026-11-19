@@ -228,3 +228,48 @@ test('pathFrom ends at the best set even when greedy steps would not', async () 
   assert.deepEqual(path.map((p) => p.traits.join('+')), ['C+D', 'C+D+A']);
   assert.equal(path.at(-1).score, 20);
 });
+
+test('remainingChances follows the campaign structure', async () => {
+  const { remainingChances } = await import('../docs/structure.js');
+  const st = {
+    groups: { free: ['a', 'b', 'c', 'd', 'e'] },
+    slots: [['free'], ['free', 'n1'], ['free'], ['free', 'n2'], ['free'], ['final']],
+  };
+  const full = remainingChances(st);
+  assert.equal(full.combinations, 21);
+  assert.equal(full.chances.a, 15 / 21);
+  assert.equal(full.chances.n1, 15 / 21);
+  assert.equal(full.chances.final, 1);
+  const later = remainingChances(st, ['d', 'n1']);
+  assert.equal(later.combinations, 10);
+  assert.equal(later.chances.a, 0.6);
+  assert.equal(later.chances.n2, 0.6);
+  assert.equal(later.chances.d, 0);
+  assert.equal(later.chances.n1, 0);
+  assert.equal(remainingChances(st, ['n2']), null); // n2 can't be among the first played
+});
+
+test('page engine matches the build for the full campaign', async () => {
+  const { computeCampaign } = await import('../docs/engine.js');
+  const { makeTable } = await import('../src/table.js');
+  const { COUNTED_TYPES, scenarioWeights } = await import('../src/count.js');
+  const camp = {
+    name: 'C',
+    scenarios: { one: { name: 'One', sets: ['rock', 'ghouls'] }, two: { name: 'Two', sets: ['forest', 'rock'] } },
+    structure: { slots: [['one', 'two'], ['one', 'two']] },
+  };
+  const pool = [
+    ...scenarioCards,
+    card('treachery', 'Hazard. Power.', 1, { encounter_code: 'rock', text: 'Place doom.' }),
+    card('enemy', 'Monster. Elite.', 1, { encounter_code: 'forest', enemy_fight: 3 }),
+  ];
+  const chances = scenarioWeights(camp);
+  const got = computeCampaign(COUNTED_TYPES, makeTable(pool, camp), chances, { one: 'One', two: 'Two' });
+  for (const [mode, options] of [['expected', {}], ['once', {}]]) {
+    const want = countTraits(pool, scopeOf(camp, null, mode), options);
+    assert.equal(got[mode].copies, want.copies);
+    assert.deepEqual(got[mode].traits.map((t) => [t.trait, t.total]), want.traits.map((t) => [t.trait, t.total]));
+    assert.deepEqual(got[mode].overlaps, countOverlaps(pool, scopeOf(camp, null, mode)));
+  }
+  assert.equal(got.expected.tested.copies, countTraits(pool, scopeOf(camp), { testedOnly: true }).copies);
+});

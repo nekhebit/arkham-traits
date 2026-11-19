@@ -1,6 +1,8 @@
 // Renders the trait and pair charts from traits.json (built by `npm run build`).
 import data from './traits.json' with { type: 'json' };
 import { rankPairs } from './pairs.js';
+import { computeCampaign } from './engine.js';
+import { remainingChances } from './structure.js';
 
 const TYPE_LABELS = {
   enemy: 'Enemy',
@@ -38,7 +40,7 @@ const testedBox = $('tested');
 const MODE_NOTES = {
   expected: [
     'Expected per playthrough.',
-    "You don't play every scenario in one campaign. Each encounter set counts once per scenario that uses it, multiplied by the chance that you play that scenario. This assumes every valid path is equally likely. Your own path will differ.",
+    "You don't play every scenario in one campaign. Each encounter set counts once per scenario that uses it, multiplied by the chance that you play that scenario. This assumes every possible combination of scenarios is equally likely. Your own path will differ.",
   ],
   once: [
     'Each set once.',
@@ -46,12 +48,62 @@ const MODE_NOTES = {
   ],
 };
 
+// "Already played" scenarios per campaign, remembered in this browser only.
+const playedKey = (id) => `arkham-traits:played:${id}`;
+function loadPlayed(id) {
+  try {
+    return JSON.parse(localStorage.getItem(playedKey(id)) ?? '[]');
+  } catch {
+    return [];
+  }
+}
+function savePlayed(id, list) {
+  try {
+    localStorage.setItem(playedKey(id), JSON.stringify(list));
+  } catch {
+    // Storage blocked: the choice still works until the page reloads.
+  }
+}
+let played = [];
+const computedCache = new Map();
+
+// Recomputed whole-campaign data for the played scenarios, or null when
+// nothing is played (use the built data) or the choice doesn't fit.
+function playedCampaign() {
+  const campaign = data.campaigns[select.value];
+  if (!played.length || !campaign.structure) return null;
+  const key = `${select.value}:${[...played].sort().join(',')}`;
+  if (!computedCache.has(key)) {
+    const r = remainingChances(campaign.structure, played);
+    const names = Object.fromEntries(Object.entries(campaign.scenarios).map(([id, s]) => [id, s.name]));
+    computedCache.set(key, r ? { ...computeCampaign(data.types, campaign.table, r.chances, names), combinations: r.combinations } : { impossible: true });
+  }
+  return computedCache.get(key);
+}
+
+function fillPlayed() {
+  const campaign = data.campaigns[select.value];
+  played = campaign.structure ? loadPlayed(select.value).filter((id) => campaign.scenarios[id]) : [];
+  $('played-list').replaceChildren(
+    ...Object.entries(campaign.scenarios ?? {}).map(([id, s]) => {
+      const box = el('input', { type: 'checkbox', value: id, checked: played.includes(id) });
+      box.addEventListener('change', () => {
+        played = [...$('played-list').querySelectorAll('input:checked')].map((b) => b.value);
+        savePlayed(select.value, played);
+        render();
+      });
+      return el('label', { className: 'check' }, [box, ` ${s.name}`]);
+    }),
+  );
+}
+
 for (const [id, c] of Object.entries(data.campaigns)) select.append(el('option', { value: id, textContent: c.name }));
 const [hashCampaign, ...hashFlags] = decodeURIComponent(location.hash.slice(1)).split('/');
 if (data.campaigns[hashCampaign]) select.value = hashCampaign;
 if (hashFlags.includes('once')) mode = 'once';
 testedBox.checked = hashFlags.includes('tested');
 fillScenarioSelect(hashFlags.find((f) => f !== 'once' && f !== 'tested'));
+fillPlayed();
 
 function fillScenarioSelect(keep = '') {
   const scenarios = data.campaigns[select.value].scenarios ?? {};
@@ -81,6 +133,26 @@ function updateModeControls() {
   $('mode-note').replaceChildren(el('strong', { textContent: lead }), ` ${text}`);
   for (const b of modeButtons) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
   $('tested-note').hidden = !testedBox.checked;
+
+  // Already played: only for a whole campaign with a structure.
+  const pc = playedCampaign();
+  $('played-row').hidden = !show || !campaign.structure;
+  $('played-note').hidden = $('played-row').hidden || !played.length;
+  if (pc?.impossible) {
+    $('played-note').replaceChildren(
+      el('strong', { textContent: "These don't fit the campaign." }),
+      ' The ticked scenarios cannot all be among the first ones played, so the full campaign is shown.',
+    );
+  } else if (pc) {
+    $('played-note').replaceChildren(
+      el('strong', { textContent: 'Rest of the campaign.' }),
+      ` Played scenarios are left out, and the chances of the others are recomputed from the campaign structure (${pc.combinations} possible combinations left).`,
+    );
+  }
+  for (const o of scenarioSelect.options) {
+    const s = campaign.scenarios?.[o.value];
+    if (s) o.textContent = played.includes(o.value) ? `${s.name} (played)` : s.name;
+  }
 }
 
 // The selected campaign or scenario: { copies, traits, overlaps },
@@ -88,11 +160,13 @@ function updateModeControls() {
 function currentView() {
   const campaign = data.campaigns[select.value];
   const scenario = campaign.scenarios?.[scenarioSelect.value];
-  const base = scenario ?? campaign[mode];
+  const pc = playedCampaign();
+  const whole = pc && !pc.impossible ? pc : campaign;
+  const base = scenario ?? whole[mode];
   const tested = testedBox.checked;
   return {
     view: tested ? base.tested : base,
-    title: scenario ? `${scenario.name} (${campaign.name})` : campaign.name,
+    title: scenario ? `${scenario.name} (${campaign.name})` : pc && !pc.impossible ? `${campaign.name}, rest of campaign` : campaign.name,
     scope: [scenario ? scenario.name : MODE_NOTES[mode][0].replace(/\.$/, '').toLowerCase(), tested && 'skill tests only']
       .filter(Boolean)
       .join(' · '),
@@ -101,6 +175,7 @@ function currentView() {
 
 select.addEventListener('change', () => {
   fillScenarioSelect();
+  fillPlayed();
   updateHash();
   render();
 });
@@ -289,7 +364,9 @@ const pctText = (x) => `${Math.round(x * 100)}%`;
 function currentSpread() {
   const campaign = data.campaigns[select.value];
   if (scenarioSelect.value || !campaign.spread) return null;
-  return { scenarios: campaign.spread.scenarios, ...campaign.spread[testedBox.checked ? 'tested' : 'all'] };
+  const pc = playedCampaign();
+  const spread = pc && !pc.impossible ? pc.spread : campaign.spread;
+  return { scenarios: spread.scenarios, ...spread[testedBox.checked ? 'tested' : 'all'] };
 }
 
 function renderUpgrades(campaign) {

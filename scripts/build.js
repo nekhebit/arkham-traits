@@ -2,8 +2,9 @@
 // Contains only trait names and counts (see CLAUDE.md content rules).
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { COUNTED_TYPES, campaignCards, campaignProblems, countOverlaps, countTraits, parseWeight, scopeOf } from '../src/count.js';
-import { bestSets, pathFrom, rankSets, spreadScorers, topTraits, upgradePath } from '../src/sets.js';
+import { COUNTED_TYPES, campaignCards, campaignProblems, countOverlaps, countTraits, scenarioWeights, scopeOf } from '../src/count.js';
+import { makeTable } from '../src/table.js';
+import { bestSets, pathFrom, rankSets, spreadScorers, topTraits, upgradePath } from '../docs/sets.js';
 
 const ROOT = join(import.meta.dirname, '..');
 const readJson = async (path) => JSON.parse(await readFile(join(ROOT, path), 'utf8'));
@@ -57,7 +58,8 @@ const r3 = (n) => Math.round(n * 1000) / 1000;
 function spreadFor(campaign, options) {
   const ids = Object.keys(campaign.scenarios);
   const perScenario = ids.map((id) => campaignCards(cards, scopeOf(campaign, id), options));
-  const weights = ids.map((id) => parseWeight(campaign.scenarios[id].weight));
+  const chance = scenarioWeights(campaign);
+  const weights = ids.map((id) => chance[id]);
   const { traits, shares, avg, worst } = spreadScorers(perScenario, weights);
   const row = (set, score) => ({ traits: set, score: r3(score), shares: shares(set).map(r3) });
   const pool = topTraits(traits, avg); // worst-case scores are often 0, so pick candidates by average
@@ -92,10 +94,15 @@ for (const [id, campaign] of Object.entries(campaigns)) {
   };
   if (Object.keys(scenarios).length) {
     out.campaigns[id].spread = {
-      scenarios: Object.entries(campaign.scenarios).map(([sid, sc]) => ({ id: sid, name: sc.name, weight: r3(parseWeight(sc.weight)) })),
+      scenarios: Object.entries(campaign.scenarios).map(([sid, sc]) => ({ id: sid, name: sc.name, weight: r3(scenarioWeights(campaign)[sid]) })),
       all: spreadFor(campaign),
       tested: spreadFor(campaign, { testedOnly: true }),
     };
+    // For "already played": the page recomputes from this table and the structure.
+    if (campaign.structure) {
+      out.campaigns[id].structure = campaign.structure;
+      out.campaigns[id].table = makeTable(cards, campaign);
+    }
   }
   views += 2;
 }
