@@ -163,7 +163,7 @@ function showTip(row, { title, lines }) {
       el('div', { className: 'line' }, [
         el('span', { className: 'swatch', style: `background:${l.color}` }),
         el('span', { textContent: l.label }),
-        el('span', { textContent: fmt(l.value) }),
+        el('span', { textContent: typeof l.value === 'number' ? fmt(l.value) : l.value }),
       ]),
     ),
   );
