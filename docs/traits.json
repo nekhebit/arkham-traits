@@ -1,5 +1,7 @@
 {
  "source": "ArkhamDB",
+ "version": "0.2.0",
+ "dataDate": "2026-11-19",
  "types": [
   "enemy",
   "treachery",

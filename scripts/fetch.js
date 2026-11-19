@@ -18,3 +18,8 @@ for (const [file, url] of Object.entries(SOURCES)) {
   await writeFile(join(CACHE_DIR, file), text);
   console.log(`${file}: ${(text.length / 1e6).toFixed(1)} MB`);
 }
+
+// Shown on the page as "card data <date>".
+const date = new Date().toISOString().slice(0, 10);
+await writeFile(join(CACHE_DIR, 'fetched.json'), JSON.stringify({ date }) + '\n');
+console.log(`fetched.json: ${date}`);

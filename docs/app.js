@@ -192,3 +192,26 @@ function render() {
 }
 
 render();
+
+// ---- Version ----------------------------------------------------------------
+// version.json only exists on the deployed site (written by the Pages workflow).
+
+async function renderVersion() {
+  const target = $('version');
+  let commit = null;
+  try {
+    const res = await fetch('version.json', { cache: 'no-store' });
+    if (res.ok) commit = (await res.json()).commit;
+  } catch {
+    // Local preview: no deploy info.
+  }
+  target.append(`v${data.version} · `);
+  if (commit) {
+    target.append(el('a', { href: `https://github.com/nekhebit/arkham-traits/commit/${commit}`, textContent: commit }));
+  } else {
+    target.append('local');
+  }
+  target.append(` · card data ${data.dataDate}`);
+}
+
+renderVersion();

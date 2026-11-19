@@ -19,6 +19,8 @@ by counting trait frequency on encounter cards per campaign.
 ## Conventions
 - Node.js, ES modules, no build step
 - Commit messages: imperative subject, no co-author trailer
+- Deploy: every push to main deploys docs/ via .github/workflows/pages.yml, which writes docs/version.json (short commit hash)
+- Version: bump `version` in package.json for user-visible changes, then `npm run build` and commit docs/traits.json
 
 ## Working preferences
 - Never use em dashes in text output, unless explicitly told to for that instance.

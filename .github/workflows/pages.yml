@@ -1,0 +1,33 @@
+# Deploys docs/ to GitHub Pages on every push to main.
+# Writes docs/version.json with the short commit hash, shown in the page footer.
+name: Deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Write version.json
+        run: echo "{\"commit\":\"${GITHUB_SHA::7}\"}" > docs/version.json
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4

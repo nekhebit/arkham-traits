@@ -1,6 +1,6 @@
 // Writes docs/traits.json: trait counts per campaign for the web page.
 // Contains only trait names and counts (see CLAUDE.md content rules).
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { COUNTED_TYPES, countOverlaps, countTraits } from '../src/count.js';
 
@@ -16,7 +16,16 @@ try {
   process.exit(1);
 }
 
-const out = { source: 'ArkhamDB', types: COUNTED_TYPES, campaigns: {} };
+// Fetch date from `npm run fetch`; older caches fall back to the file date.
+let dataDate;
+try {
+  dataDate = (await readJson('data/cache/fetched.json')).date;
+} catch {
+  dataDate = (await stat(join(ROOT, 'data/cache/api-public-cards.json'))).mtime.toISOString().slice(0, 10);
+}
+
+const { version } = await readJson('package.json');
+const out = { source: 'ArkhamDB', version, dataDate, types: COUNTED_TYPES, campaigns: {} };
 for (const [id, campaign] of Object.entries(campaigns)) {
   const { cards: count, copies, traits } = countTraits(cards, campaign);
   out.campaigns[id] = {
