@@ -2,7 +2,7 @@
 // Contains only trait names and counts (see CLAUDE.md content rules).
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { COUNTED_TYPES, countTraits } from '../src/count.js';
+import { COUNTED_TYPES, countOverlaps, countTraits } from '../src/count.js';
 
 const ROOT = join(import.meta.dirname, '..');
 const readJson = async (path) => JSON.parse(await readFile(join(ROOT, path), 'utf8'));
@@ -24,6 +24,8 @@ for (const [id, campaign] of Object.entries(campaigns)) {
     cards: count,
     copies,
     traits: traits.map(({ trait, total, byType }) => ({ trait, total, byType })),
+    // Only non-zero pairs; the page derives coverage for all pairs (docs/pairs.js).
+    overlaps: countOverlaps(cards, campaign),
   };
 }
 

@@ -21,6 +21,25 @@ export function campaignCards(cards, campaign) {
   );
 }
 
+// Copies that carry both traits, for every pair that appears together.
+// Returns [[traitA, traitB, copies]] with traitA < traitB, sorted by copies.
+export function countOverlaps(cards, campaign) {
+  const both = new Map();
+  for (const card of campaignCards(cards, campaign)) {
+    const qty = card.quantity ?? 1;
+    const traits = [...new Set(splitTraits(card.traits))].sort();
+    for (let i = 0; i < traits.length; i++) {
+      for (let j = i + 1; j < traits.length; j++) {
+        const k = `${traits[i]}\u0000${traits[j]}`;
+        both.set(k, (both.get(k) ?? 0) + qty);
+      }
+    }
+  }
+  return [...both]
+    .map(([k, n]) => [...k.split('\u0000'), n])
+    .sort((p, q) => q[2] - p[2] || p[0].localeCompare(q[0]) || p[1].localeCompare(q[1]));
+}
+
 // Returns { cards, copies, traits: [{ trait, total, share, byType }] },
 // sorted by total copies (descending), then trait name.
 export function countTraits(cards, campaign) {

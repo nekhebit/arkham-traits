@@ -1,5 +1,6 @@
-// Renders the trait chart from traits.json (built by `npm run build`).
+// Renders the trait and pair charts from traits.json (built by `npm run build`).
 import data from './traits.json' with { type: 'json' };
+import { rankPairs } from './pairs.js';
 
 const TYPE_LABELS = {
   enemy: 'Enemy',
@@ -7,6 +8,9 @@ const TYPE_LABELS = {
   location: 'Location',
   enemy_location: 'Enemy-location',
 };
+const PAIR_ROWS = 10;
+// Value label sits beside the bar; the longest bar leaves this much room for it.
+const LABEL_ROOM = 40;
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, children = []) => {
@@ -16,7 +20,13 @@ const el = (tag, props = {}, children = []) => {
 };
 
 const types = data.types;
-const color = (type) => `var(--series-${types.indexOf(type) + 1})`;
+const typeColor = (type) => `var(--series-${types.indexOf(type) + 1})`;
+const PAIR_PARTS = [
+  { key: 'overlap', label: 'Both traits (4 wild icons)', color: 'var(--pair-both)' },
+  { key: 'single', label: 'One trait (2 wild icons)', color: 'var(--pair-one)' },
+];
+
+// ---- Controls ---------------------------------------------------------------
 
 const select = $('campaign');
 for (const [id, c] of Object.entries(data.campaigns)) select.append(el('option', { value: id, textContent: c.name }));
@@ -26,91 +36,157 @@ select.addEventListener('change', () => {
   history.replaceState(null, '', `#${select.value}`);
   render();
 });
+$('fixed').addEventListener('change', () => renderPairs(data.campaigns[select.value]));
 
-// Legend: fixed order, the same colors for every campaign.
-$('legend').append(
-  ...types.map((t) => el('li', {}, [el('span', { className: 'swatch', style: `background:${color(t)}` }), TYPE_LABELS[t]])),
-);
+// Legends: fixed order, same colors for every campaign.
+const legendItem = (color, label) => el('li', {}, [el('span', { className: 'swatch', style: `background:${color}` }), label]);
+$('legend').append(...types.map((t) => legendItem(typeColor(t), TYPE_LABELS[t])));
+$('pair-legend').append(...PAIR_PARTS.map((p) => legendItem(p.color, p.label)));
 
-function render() {
-  const campaign = data.campaigns[select.value];
-  const max = Math.max(...campaign.traits.map((t) => t.total));
-  $('chart-title').textContent = `${campaign.name}: ${campaign.cards} cards, ${campaign.copies} copies`;
+// ---- Shared pieces ----------------------------------------------------------
 
-  $('chart').replaceChildren(
-    ...campaign.traits.map((t) => {
-      const segs = types
-        .filter((type) => t.byType[type])
-        .map((type) => el('div', { className: 'seg', style: `flex:${t.byType[type]};background:${color(type)}` }));
-      // Scale against the track minus 40px, so the longest bar still leaves room for its value label.
-      const bar = el('div', { className: 'bar', style: `width:calc((100% - 40px) * ${t.total / max})` }, segs);
-      const row = el('div', { className: 'row', tabIndex: 0, role: 'listitem' }, [
-        el('span', { className: 'trait', textContent: t.trait, title: t.trait }),
-        el('div', { className: 'track' }, [bar, el('span', { className: 'value', textContent: t.total })]),
-      ]);
-      row.setAttribute('aria-label', describe(t, campaign));
-      row.addEventListener('pointerenter', () => showTip(row, t, campaign));
-      row.addEventListener('focus', () => showTip(row, t, campaign));
-      row.addEventListener('pointerleave', hideTip);
-      row.addEventListener('blur', hideTip);
-      return row;
-    }),
-  );
+const pct = (n, campaign) => `${((n / campaign.copies) * 100).toFixed(1)}%`;
 
-  renderTable(campaign);
+// parts: [{ value, color }]; ratio: bar length relative to the longest bar.
+function barRow({ label, value, ratio, parts, ariaLabel, tip }) {
+  const segs = parts
+    .filter((p) => p.value)
+    .map((p) => el('div', { className: 'seg', style: `flex:${p.value};background:${p.color}` }));
+  const bar = el('div', { className: 'bar', style: `width:calc((100% - ${LABEL_ROOM}px) * ${ratio})` }, segs);
+  const row = el('div', { className: 'row', tabIndex: 0, role: 'listitem' }, [
+    el('span', { className: 'label', textContent: label, title: label }),
+    el('div', { className: 'track' }, [bar, el('span', { className: 'value', textContent: value })]),
+  ]);
+  row.setAttribute('aria-label', ariaLabel);
+  const show = () => showTip(row, tip);
+  row.addEventListener('pointerenter', show);
+  row.addEventListener('focus', show);
+  row.addEventListener('pointerleave', hideTip);
+  row.addEventListener('blur', hideTip);
+  return row;
 }
 
-function pct(n, campaign) {
-  return `${((n / campaign.copies) * 100).toFixed(1)}%`;
-}
-
-function describe(t, campaign) {
-  const parts = types.filter((type) => t.byType[type]).map((type) => `${TYPE_LABELS[type]} ${t.byType[type]}`);
-  return `${t.trait}: ${t.total} copies, ${pct(t.total, campaign)} of encounter cards. ${parts.join(', ')}`;
-}
-
-function showTip(row, t, campaign) {
+// tip: { title, lines: [{ color, label, value }] }
+function showTip(row, { title, lines }) {
   const tip = $('tooltip');
   tip.replaceChildren(
-    el('strong', { textContent: `${t.trait}: ${t.total} (${pct(t.total, campaign)})` }),
-    ...types
-      .filter((type) => t.byType[type])
-      .map((type) =>
-        el('div', { className: 'line' }, [
-          el('span', { className: 'swatch', style: `background:${color(type)}` }),
-          el('span', { textContent: TYPE_LABELS[type] }),
-          el('span', { textContent: t.byType[type] }),
-        ]),
-      ),
+    el('strong', { textContent: title }),
+    ...lines.map((l) =>
+      el('div', { className: 'line' }, [
+        el('span', { className: 'swatch', style: `background:${l.color}` }),
+        el('span', { textContent: l.label }),
+        el('span', { textContent: l.value }),
+      ]),
+    ),
   );
   tip.hidden = false;
-  const chart = $('chart');
-  const top = row.offsetTop + row.offsetHeight + 4;
-  const left = Math.min(row.querySelector('.track').offsetLeft + 8, chart.clientWidth - tip.offsetWidth);
-  tip.style.top = `${top + chart.offsetTop}px`;
-  tip.style.left = `${Math.max(0, left) + chart.offsetLeft}px`;
+  // Position relative to <main>, the tooltip's offset parent.
+  const box = row.getBoundingClientRect();
+  const host = tip.offsetParent.getBoundingClientRect();
+  const left = box.left - host.left + row.querySelector('.track').offsetLeft + 8;
+  tip.style.top = `${box.bottom - host.top + 4}px`;
+  tip.style.left = `${Math.max(0, Math.min(left, host.width - tip.offsetWidth))}px`;
 }
 
 function hideTip() {
   $('tooltip').hidden = true;
 }
 
-function renderTable(campaign) {
-  const head = el('tr', {}, [
-    el('th', { textContent: 'Trait' }),
-    el('th', { textContent: 'Total' }),
-    el('th', { textContent: 'Share' }),
-    ...types.map((type) => el('th', { textContent: TYPE_LABELS[type] })),
-  ]);
-  const rows = campaign.traits.map((t) =>
-    el('tr', {}, [
-      el('td', { textContent: t.trait }),
-      el('td', { textContent: t.total }),
-      el('td', { textContent: pct(t.total, campaign) }),
-      ...types.map((type) => el('td', { textContent: t.byType[type] || '' })),
-    ]),
+function table(target, headers, rows) {
+  $(target).replaceChildren(
+    el('thead', {}, [el('tr', {}, headers.map((h) => el('th', { textContent: h })))]),
+    el('tbody', {}, rows.map((r) => el('tr', {}, r.map((v) => el('td', { textContent: v }))))),
   );
-  $('table').replaceChildren(el('thead', {}, [head]), el('tbody', {}, rows));
+}
+
+// ---- Trait chart ------------------------------------------------------------
+
+function renderTraits(campaign) {
+  const max = Math.max(...campaign.traits.map((t) => t.total));
+  $('chart-title').textContent = `${campaign.name}: ${campaign.cards} cards, ${campaign.copies} copies`;
+
+  $('chart').replaceChildren(
+    ...campaign.traits.map((t) => {
+      const present = types.filter((type) => t.byType[type]);
+      return barRow({
+        label: t.trait,
+        value: t.total,
+        ratio: t.total / max,
+        parts: types.map((type) => ({ value: t.byType[type], color: typeColor(type) })),
+        ariaLabel: `${t.trait}: ${t.total} copies, ${pct(t.total, campaign)} of encounter cards. ${present
+          .map((type) => `${TYPE_LABELS[type]} ${t.byType[type]}`)
+          .join(', ')}`,
+        tip: {
+          title: `${t.trait}: ${t.total} (${pct(t.total, campaign)})`,
+          lines: present.map((type) => ({ color: typeColor(type), label: TYPE_LABELS[type], value: t.byType[type] })),
+        },
+      });
+    }),
+  );
+
+  table(
+    'table',
+    ['Trait', 'Total', 'Share', ...types.map((type) => TYPE_LABELS[type])],
+    campaign.traits.map((t) => [t.trait, t.total, pct(t.total, campaign), ...types.map((type) => t.byType[type] || '')]),
+  );
+}
+
+// ---- Pair chart -------------------------------------------------------------
+
+function fillFixedSelect(campaign) {
+  const fixed = $('fixed');
+  const keep = fixed.value;
+  fixed.replaceChildren(
+    el('option', { value: '', textContent: 'Any' }),
+    ...campaign.traits.map((t) => el('option', { value: t.trait, textContent: `${t.trait} (${t.total})` })),
+  );
+  fixed.value = campaign.traits.some((t) => t.trait === keep) ? keep : '';
+}
+
+function renderPairs(campaign) {
+  const fixed = $('fixed').value || null;
+  const pairs = rankPairs(campaign.traits, campaign.overlaps, { fixed, limit: PAIR_ROWS });
+  const max = pairs[0]?.coverage || 1;
+
+  $('pairs').replaceChildren(
+    ...pairs.map((p) => {
+      const name = `${p.a} + ${p.b}`;
+      const single = p.onlyA + p.onlyB;
+      return barRow({
+        label: name,
+        value: p.coverage,
+        ratio: p.coverage / max,
+        parts: [
+          { value: p.overlap, color: PAIR_PARTS[0].color },
+          { value: single, color: PAIR_PARTS[1].color },
+        ],
+        ariaLabel: `${name}: helps on ${p.coverage} copies, ${pct(p.coverage, campaign)}. Both traits on ${p.overlap}.`,
+        tip: {
+          title: `${name}: ${p.coverage} (${pct(p.coverage, campaign)})`,
+          lines: [
+            { color: PAIR_PARTS[0].color, label: 'Both traits', value: p.overlap },
+            { color: PAIR_PARTS[1].color, label: `Only ${p.a}`, value: p.onlyA },
+            { color: PAIR_PARTS[1].color, label: `Only ${p.b}`, value: p.onlyB },
+          ],
+        },
+      });
+    }),
+  );
+
+  table(
+    'pair-table',
+    ['Pair', 'Coverage', 'Share', 'Both', `Only first`, `Only second`],
+    pairs.map((p) => [`${p.a} + ${p.b}`, p.coverage, pct(p.coverage, campaign), p.overlap, p.onlyA, p.onlyB]),
+  );
+}
+
+// ---- Render -----------------------------------------------------------------
+
+function render() {
+  const campaign = data.campaigns[select.value];
+  renderTraits(campaign);
+  fillFixedSelect(campaign);
+  renderPairs(campaign);
 }
 
 render();

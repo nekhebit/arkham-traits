@@ -20,6 +20,8 @@
     --series-2: #eb6834;
     --series-3: #1baf7a;
     --series-4: #eda100;
+    --pair-both: #256abf;
+    --pair-one: #86b6ef;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -37,6 +39,8 @@
       --series-2: #d95926;
       --series-3: #199e70;
       --series-4: #c98500;
+      --pair-both: #6da7ec;
+      --pair-one: #1c5cab;
     }
   }
   :root[data-theme="dark"] {
@@ -54,6 +58,8 @@
     --series-2: #d95926;
     --series-3: #199e70;
     --series-4: #c98500;
+    --pair-both: #6da7ec;
+    --pair-one: #1c5cab;
   }
 
   * { box-sizing: border-box; }
@@ -63,7 +69,7 @@
     color: var(--text-primary);
     font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
   }
-  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; }
+  main { position: relative; max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; }
   h1 { font-size: 24px; margin: 0 0 4px; }
   .lede { color: var(--text-secondary); margin: 0 0 24px; }
 
@@ -75,20 +81,23 @@
   }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
-  .summary { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
+  .card + .card { margin-top: 24px; }
+  .summary { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .note { color: var(--text-secondary); font-size: 13px; margin: 0 0 12px; }
+  .card .controls { margin: 0 0 12px; }
 
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; padding: 0; margin: 0 0 16px; color: var(--text-secondary); font-size: 13px; }
   .legend li { display: flex; align-items: center; gap: 6px; }
   .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
 
-  .chart { position: relative; }
   .row {
     display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: 12px;
-    height: 24px; border-radius: 4px; cursor: default;
+    min-height: 24px; border-radius: 4px; cursor: default;
   }
+  .pairs .row { grid-template-columns: 190px 1fr; min-height: 28px; }
   .row:hover, .row:focus-visible { background: var(--row-hover); outline: none; }
-  .trait { font-size: 13px; text-align: right; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .track { display: flex; align-items: center; gap: 8px; height: 100%; border-left: 1px solid var(--axis); }
+  .label { font-size: 13px; text-align: right; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track { display: flex; align-items: center; gap: 8px; align-self: stretch; border-left: 1px solid var(--axis); }
   .bar { display: flex; gap: 2px; height: 16px; flex: none; }
   .seg { height: 100%; }
   .seg:last-child { border-radius: 0 4px 4px 0; }
@@ -117,6 +126,8 @@
 
   @media (max-width: 480px) {
     .row { grid-template-columns: 92px 1fr; gap: 8px; }
+    .pairs .row { grid-template-columns: 120px 1fr; }
+    .pairs .label { white-space: normal; line-height: 1.2; padding: 2px 0; }
     select { min-width: 0; width: 100%; }
   }
 </style>
@@ -135,13 +146,30 @@
     <h2 id="chart-title" class="summary"></h2>
     <ul class="legend" id="legend"></ul>
     <div class="chart" id="chart" role="list"></div>
-    <div class="tooltip" id="tooltip" hidden></div>
 
     <details>
       <summary>Show as table</summary>
       <div class="table-wrap"><table id="table"></table></div>
     </details>
   </section>
+
+  <section class="card" aria-labelledby="pairs-title">
+    <h2 id="pairs-title" class="summary">Best pairs</h2>
+    <p class="note">Copies with at least one of the two traits, so Grizzled helps. Cards with both traits give 4 wild icons instead of 2.</p>
+    <div class="controls">
+      <label for="fixed">First trait</label>
+      <select id="fixed"></select>
+    </div>
+    <ul class="legend" id="pair-legend"></ul>
+    <div class="chart pairs" id="pairs" role="list"></div>
+
+    <details>
+      <summary>Show as table</summary>
+      <div class="table-wrap"><table id="pair-table"></table></div>
+    </details>
+  </section>
+
+  <div class="tooltip" id="tooltip" hidden></div>
 
   <footer>
     Card data from <a href="https://arkhamdb.com">ArkhamDB</a>. Arkham Horror: The Card Game is © Fantasy Flight Games.
